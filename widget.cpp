@@ -75,7 +75,7 @@ void Widget::on_addPushButton_clicked(){
     //player->addFile(finfo.filePath().toStdString());
    // player->addFile(ui->lineEdit->text());
     #else
-   //player->addFile(finfo.filePath().toStdString().c_str());
+        player->addFile(finfo.filePath().toStdString().c_str());
     #endif
     #endif
 }
