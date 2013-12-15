@@ -28,7 +28,7 @@ Widget::Widget(QWidget *parent) :
 Widget::~Widget()
 {
 #ifndef __DONT_USE_PLAYER
-  player->terminatePlayer();
+  //player->terminatePlayer();
   delete player;
 #endif
     delete ui;
