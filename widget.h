@@ -22,7 +22,9 @@ public:
     ~Widget();
 
 public slots:
+    void on_reverseButton_clicked(bool checked);
     void on_browsePushButton_clicked();
+    void on_addAndPlayPushButton_clicked();
     void on_addPushButton_clicked();
     void on_removePushButton_clicked();
     void on_playPushButton_clicked();
@@ -30,6 +32,7 @@ public slots:
     void on_stopPushButton_clicked();
     void on_pausePushButton_clicked();
     void on_devicesComboBox_IndexChanged(QString);
+    void customEvent(QEvent *e);
     
 private:
     Ui::Widget *ui;

@@ -3,6 +3,42 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <map>
+#include "psndevents.h"
+
+QString
+time2str(double t, int e)
+{
+  char const * sign = "";
+  if (t < 0) {
+    sign = "-";
+    t = -t;
+  }
+  double shift = 1.0;
+  double roundup = 0.5;
+  for (int i=0; i<e; ++i) {
+    shift *= 10.0;
+    roundup /= 10.0;
+  }
+  t += roundup;
+  int sec = (int)t;
+  int msec = (int)((t-(double)sec)*shift);
+  int min = sec / 60;
+  int hour = min / 60;
+  min %= 60;
+  sec %= 60;
+  char s[128];
+  if (hour != 0)
+    sprintf(s,"%s%d:%02d:%02d.",sign,hour,min,sec);
+  else if (min != 0)
+    sprintf(s,"%s%d:%02d.",sign,min,sec);
+  else
+    sprintf(s,"%s%d.",sign,sec);
+  char f[16];
+  sprintf(f,"%%0%dd",e);
+  sprintf(&s[strlen(s)],f,msec);
+  return QString(s);
+}
+
 
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
@@ -12,16 +48,17 @@ Widget::Widget(QWidget *parent) :
     ui->setupUi(this);
 #ifndef __DONT_USE_PLAYER
     player = new PSndPlayer();
-    player->initPlayer();
-    player->enableTicker();
-    outDevices = player->getOutputDevices();
+    outDevices = player->outPut()->getOutputDevices();
     map<int,string>::const_iterator iter;
     for(iter = outDevices.begin();iter!=outDevices.end();++iter){
       QString dev = QString::fromStdString(iter->second);
       //QString dev = QString::fromStdWString(iter->second);
       ui->devicesComboBox->addItem(dev.toUtf8());
     }
-
+    player->getPlayerTicker()->registerReceiver(this);
+    ui->label->setText("0.0000");
+    ui->label->setBackgroundRole(QPalette::Dark);
+    ui->label->setForegroundRole(QPalette::HighlightedText);
 #endif
 }
 
@@ -45,11 +82,35 @@ void Widget::on_browsePushButton_clicked(){
     QString sname = QFileDialog::getOpenFileName(
         this,"Open Audio File",
         home,
-         "All (*.*)"
+         "All (**)"
             );
     if (sname.length() > 0)
       ui->lineEdit->setText(sname.toUtf8());
 }
+
+void Widget::on_addAndPlayPushButton_clicked(){
+    qDebug() << "addPushButtonClicked!";
+    QFileInfo finfo(ui->lineEdit->text());
+    #ifndef __DONT_USE_PLAYER
+    if(ui->lineEdit->text().isEmpty()){
+        //fileEntry->setText("/Users/Admin/Documents/python/_testfiles/testfolder/_no_prob/_Time/Test_Time_St_16mono44.wav");
+        //ui->lineEdit->setText("/Users/Admin/Documents/python/_testfiles/testfolder/_no_prob/_Time/Test_Time_St_16_00.wav");
+    }
+    if (!finfo.exists()) {
+        QString msg("Can't find file: '%1'");
+        QMessageBox::critical(this,"Error",msg.arg(finfo.filePath()));
+        return;
+    }
+    player->pause();
+    double len = 10;
+    #ifdef WIN32
+     player->addFile(finfo.filePath().toStdWString());
+    #else
+        player->addAndPlayFile(finfo.filePath().toStdString().c_str());
+    #endif
+    #endif
+}
+
 
 void Widget::on_addPushButton_clicked(){
     qDebug() << "addPushButtonClicked!";
@@ -67,22 +128,27 @@ void Widget::on_addPushButton_clicked(){
     player->pause();
     double len = 10;
     #ifdef WIN32
-    //player->addFile(finfo.filePath().toStdWString().c_str());
      player->addFile(finfo.filePath().toStdWString());
-    //player->addFile(finfo.filePath().toStdString().c_str());
-    //player->addFile()
-
-    //player->addFile(finfo.filePath().toStdString());
-   // player->addFile(ui->lineEdit->text());
     #else
         player->addFile(finfo.filePath().toStdString().c_str());
     #endif
     #endif
 }
 
+
+
+
+
 void Widget::on_removePushButton_clicked(){
 
 }
+
+void Widget::on_reverseButton_clicked(bool checked){
+    qDebug() << "on_reverseButton_clicked: " << checked;
+    player->reverse(checked);
+}
+
+
 void Widget::on_playPushButton_clicked(){
     paused = false;
     ui->pausePushButton->setText("||");
@@ -99,6 +165,8 @@ void Widget::on_repeatPushButton_clicked(){
 }
 
 void Widget::on_stopPushButton_clicked(){
+    qDebug() << "onstopPushButtonClicked";
+    player->stop();
 
 }
 
@@ -130,6 +198,13 @@ void Widget::on_devicesComboBox_IndexChanged(QString id){
         }
     }
 #endif
-    player->setOutputDevice(_id);
+    //player->setOutputDevice(_id);
+    player->outPut()->setOutputDevice(_id);
     #endif
+}
+
+void Widget::customEvent(QEvent *e){
+    if (e->type() == (QEvent::Type)PlayerPosition){
+      ui->label->setText(time2str(((PlayerPositionEvent*)e)->time(),4));
+    }
 }
