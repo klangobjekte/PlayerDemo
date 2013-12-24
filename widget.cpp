@@ -69,6 +69,7 @@ Widget::~Widget()
 {
 #ifndef __DONT_USE_PLAYER
   //player->terminatePlayer();
+    player->getPlayerTicker()->unregisterReceiver(this);
   delete player;
 #endif
     delete ui;
