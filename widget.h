@@ -31,7 +31,7 @@ public slots:
     void on_repeatPushButton_clicked();
     void on_stopPushButton_clicked();
     void on_pausePushButton_clicked();
-    void on_devicesComboBox_IndexChanged(QString);
+    void on_devicesComboBox_currentIndexChanged(QString);
     void customEvent(QEvent *e);
     
 private:

@@ -57,8 +57,11 @@ Widget::Widget(QWidget *parent) :
     }
     player->getPlayerTicker()->registerReceiver(this);
     ui->label->setText("0.0000");
-    ui->label->setBackgroundRole(QPalette::Dark);
-    ui->label->setForegroundRole(QPalette::HighlightedText);
+    //ui->label->setBackgroundRole(QPalette::Dark);
+    //ui->label->setForegroundRole(QPalette::HighlightedText);
+
+    //connect(ui->devicesComboBox,SIGNAL(currentIndexChanged(QString))
+
 #endif
 }
 
@@ -174,7 +177,7 @@ void Widget::on_pausePushButton_clicked(){
 
 }
 
-void Widget::on_devicesComboBox_IndexChanged(QString id){
+void Widget::on_devicesComboBox_currentIndexChanged(QString id){
     int _id =0;
     #ifndef __DONT_USE_PLAYER
 //#define _NEWCPP
