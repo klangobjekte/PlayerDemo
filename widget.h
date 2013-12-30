@@ -8,18 +8,32 @@
 #include <psndplayer.h>
 #endif
 
+#include <Waveform.h>
+#include <WaveformScrollBar.h>
+#include <WaveformRuler.h>
+#include <WaveformCursorProxy.h>
+#include <WaveformSelectionProxy.h>
+#include <waveformtextproxy.h>
+#include <waveformbuffer.h>
+#include <waveformthread.h>
+#include <TimeLabel.h>
+#include <SndFile.h>
+//#include <sndfile.h>
+
+//using namespace QWave2;
 
 namespace Ui {
-class Widget;
+class PlayerWidget;
 }
 
-class Widget : public QWidget
+class PlayerWidget : public QWidget
 {
     Q_OBJECT
+
     
 public:
-    explicit Widget(QWidget *parent = 0);
-    ~Widget();
+    explicit PlayerWidget(QWidget *parent = 0);
+    ~PlayerWidget();
 
 public slots:
     void on_reverseButton_clicked(bool checked);
@@ -28,19 +42,63 @@ public slots:
     void on_addPushButton_clicked();
     void on_removePushButton_clicked();
     void on_playPushButton_clicked();
+    void on_revPlayPushButton_clicked();
     void on_repeatPushButton_clicked();
     void on_stopPushButton_clicked();
     void on_pausePushButton_clicked();
     void on_devicesComboBox_currentIndexChanged(QString);
     void customEvent(QEvent *e);
+    int getVolume();
+    void on_loadWavePushButton_clicked();
+    void on_cursorGroupBox_buttonClicked(int id);
+    void changeSelection(double beg, double dur, Waveform*);
+    void unregisterWaveform();
+    void on_hZoomSlider_sliderMoved(int value);
+    void on_seekSlider_sliderMoved(int value);
+    void on_volumeSlider_valueChanged(int value);
+    void on_vZoomSlider_sliderMoved(int value);
+
+signals:
+    void publishWaveformCursorChanged(int);
+
     
+private slots:
+    void on_tableWidget_cellPressed(int row, int column);
+
 private:
-    Ui::Widget *ui;
+    WaveFormBuffer *waveFormBuffer;
+    SndFile* soundfile;
+    WaveformRuler* ruler;
+    WaveformScrollBar* sb;
+    WaveformCursorProxy* waveformCursorProxy;
+    WaveformSelectionProxy* waveformSelectionProxy;
+    WaveformScrollBar* waveformScrolBar;
+    WaveFormTextProxy *waveFormTextProxy;
+    std::map<psnd_string,MediaSource*> currentSources;
+    //vector<SndFile*> sndfiles;
+    //map<int,map<int,Waveform*> > waveforms;
+    typedef map<int,Waveform*> WaveformMap;
+    map<psnd_string,WaveformMap > waveforms;
+    WaveformMap waveformMap;
+    bool hasRuler;
+
+    Ui::PlayerWidget *ui;
 #ifndef __DONT_USE_PLAYER
     PSndPlayer *player;
     map<int, string> outDevices;
 #endif
     bool paused;
+
+    double startTime;
+    double selectionduration;
+    double endTime;
+    double fileduration;
+    psnd_string currentFile;
+
+
+
+
+
 };
 
 #endif // WIDGET_H
