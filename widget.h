@@ -43,6 +43,8 @@ public slots:
     void on_removePushButton_clicked();
     void on_playPushButton_clicked();
     void on_revPlayPushButton_clicked();
+    void on_fastPlayPushButton_clicked();
+    void on_fastRevPushButton_clicked();
     void on_repeatPushButton_clicked();
     void on_stopPushButton_clicked();
     void on_pausePushButton_clicked();
@@ -94,6 +96,7 @@ private:
     double endTime;
     double fileduration;
     psnd_string currentFile;
+    double speed;
 
 
 

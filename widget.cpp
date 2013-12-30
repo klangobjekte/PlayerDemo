@@ -47,7 +47,8 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     waveformCursorProxy(new WaveformCursorProxy(this)),
     waveformSelectionProxy(new WaveformSelectionProxy(this)),
     paused(false),
-    hasRuler(false)
+    hasRuler(false),
+    speed(1)
 {
     ui->setupUi(this);
     outDevices = player->audioOutPut()->getOutputDevices();
@@ -65,8 +66,6 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
 
 
     ui->seekSlider->setRange(0, 10*1000);
-    connect(ui->seekSlider, SIGNAL(sliderMoved(int)), this, SLOT(seek(int)));
-    connect(ui->volumeSlider,SIGNAL(valueChanged(int)),this,SLOT(setVolume(int)));
     ruler = new WaveformRuler(true, this);
     ui->rulerLayout_->addWidget(ruler);
     //ui->gridLayout->addWidget(ruler,0,1);
@@ -167,18 +166,30 @@ void PlayerWidget::on_reverseButton_clicked(bool checked){
 }
 
 void PlayerWidget::on_playPushButton_clicked(){
-    player->audioOutPut()->setPlaydirection(0);
+    speed = 1;
+    player->audioOutPut()->setPlaydirection(FORWARD);
     paused = false;
     ui->pausePushButton->setText("||");
-  #ifndef __DONT_USE_PLAYER
     player->play(0,5);
-  #endif
-
 }
 
 void PlayerWidget::on_revPlayPushButton_clicked(){
-    player->audioOutPut()->setPlaydirection(1);
+    player->audioOutPut()->setPlaydirection(REVERSE);
 
+}
+
+void PlayerWidget::on_fastPlayPushButton_clicked(){
+    speed+=0.1;
+    qDebug() << "on_fastPlayPushButton_clicked" << speed;
+    //player->audioOutPut()->setPlaydirection(FORWARD);
+    player->audioOutPut()->setPlaySpeed(speed);
+}
+
+void PlayerWidget::on_fastRevPushButton_clicked(){
+    qDebug() << "on_fastRevPushButton_clicked";
+    //player->audioOutPut()->setPlaydirection(REVERSE);
+    speed-=0.1;
+    player->audioOutPut()->setPlaySpeed(speed);
 }
 
 void PlayerWidget::on_repeatPushButton_clicked(){
@@ -190,8 +201,8 @@ void PlayerWidget::on_repeatPushButton_clicked(){
 
 void PlayerWidget::on_stopPushButton_clicked(){
     qDebug() << "onstopPushButtonClicked";
+    speed = 1;
     player->stop();
-
 }
 
 void PlayerWidget::on_pausePushButton_clicked(){
@@ -200,21 +211,18 @@ void PlayerWidget::on_pausePushButton_clicked(){
 
 void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString id){
     int _id =0;
-    #ifndef __DONT_USE_PLAYER
+
 //#define _NEWCPP
 #ifdef _NEWCPP
     //! c++11
-
     for(auto iter: outDevices){
         if(iter.second == id.toStdString().c_str()){
         _id =  iter.first;
         }
     }
-
 #else
     map<int,string>::iterator iter;
     for(iter = outDevices.begin();iter != outDevices.end();++iter) {
-
         //QString dev = QString::fromStdString(iter->second);
         // devicesComboBox->addItem(dev);
         if(iter->second == id.toStdString().c_str()){
@@ -223,8 +231,6 @@ void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString id){
     }
 #endif
     player->audioOutPut()->setOutputDevice(_id);
-
-    #endif
 }
 
 void PlayerWidget::customEvent(QEvent *e){
