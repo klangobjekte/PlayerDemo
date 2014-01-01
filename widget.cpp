@@ -265,28 +265,19 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
 #else
        filename = ui->lineEdit->text().toStdString();
 #endif
-
-    //for (sourceIter= currentSources.begin();sourceIter != currentSources.end();sourceIter++){
     if(currentSources.find(filename) != currentSources.end()){
-
-            //filename = sourceIter->first;
             mediaSource = currentSources[filename];
             currentFile = filename;
             double len = mediaSource->duration();
             qDebug() << "len: " << len;
-
             ui->seekSlider->setRange(0, len*1000);
-
             if(waveforms.find(filename) == waveforms.end()){
-
                 waveFormBuffer = new WaveFormBuffer(this,
                                                 filename.c_str(),
                                                 mediaSource->outData()->outSampleRate,
                                                 mediaSource->outData()->channels,
                                                 mediaSource->outData()->num_frames,
                                                 len);
-
-
                 //qDebug() << "calling loadBuffer 1 --------------------------------------";
                 //waveFormBuffer->loadBuffer(mediaSource->outData()->data,
                 //                       0,
@@ -300,10 +291,9 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
                     //ui->gridLayout->addWidget(verticalRuler, gridCurRow, 0); // Vertical Ruler (WaveformRuler)
 
                     waveformSelectionProxy->registerWaveform(waveform);
-
                     waveformCursorProxy->registerWaveform(waveform);
 
-                    //waveformScrolBar->registerWaveform(waveform);
+                    waveformScrolBar->registerWaveform(waveform);
 
                     connect(waveformSelectionProxy,SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
                             waveform,SLOT(setSelectionParameter(double,double,Waveform*)));
@@ -419,7 +409,7 @@ void PlayerWidget::unregisterWaveform(){
 
     map<psnd_string,WaveformMap >::iterator witer;
     witer  = waveforms.find(currentFile);
-    if(witer!= waveforms.cend()){
+    if(witer!= waveforms.end()){
 
         WaveformMap wMap = witer->second;
 

@@ -63,27 +63,29 @@ macx {
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
     QMAKE_CXXFLAGS += -mmacosx-version-min=10.5
 
-        INCLUDEPATH += /Developer/SDKs/libsndfile/libsndfile_86_10.5/local/include
-        INCLUDEPATH += /Developer/Qt_projekte/PSndWave
-        INCLUDEPATH += /Developer/Qt_projekte/PSndWave/QWave2
+        #INCLUDEPATH += /Developer/SDKs/libsndfile/libsndfile_86_10.5/local/include
+        #INCLUDEPATH += /Developer/Qt_projekte/PSndWave
+        #INCLUDEPATH += /Developer/Qt_projekte/PSndWave/QWave2
         INCLUDEPATH += /Developer/Qt_Projekte/PSndPlayer
+        INCLUDEPATH += /Users/admin7/Developer7/QtProjects/PSndPlayer
 
         INCLUDEPATH += . \
         /usr/local/include
         #../src
 
-        LIBS += -L/Developer/Qt_Projekte/PSndWave-build-Desktop_GCC_x86_32bit-Debug
-        LIBS += -L/Developer/Qt_Projekte/PSndPlayer-build-Desktop_GCC_x86_32bit-Debug
-        LIBS += -L/Developer/SDKs/libmp123/x86/lib
-        LIBS += -L/Developer/SDKs/meta/x86/lib
-        LIBS += -L/Developer/SDKs/libsndfile/libsndfile_86_10.5/local/lib
+        #LIBS += -L/Developer/Qt_Projekte/PSndWave-build-Desktop_GCC_x86_32bit-Debug
+        #LIBS += -L/Developer/Qt_Projekte/PSndPlayer-build-Desktop_GCC_x86_32bit-Debug
+        #LIBS += -L/Developer/SDKs/libmp123/x86/lib
+        #LIBS += -L/Developer/SDKs/meta/x86/lib
+        #LIBS += -L/Developer/SDKs/libsndfile/libsndfile_86_10.5/local/lib
         #LIBS += -framework \
         #Carbon \
         #-framework \
         #CoreAudio
+        LIBS += -L/usr/local/lib
         LIBS += -lsndfile \
-                -lPSndPlayer \
-                -lPSndWave
+                -lPSndPlayer
+
 
 
 
