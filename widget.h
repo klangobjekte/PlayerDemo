@@ -2,25 +2,20 @@
 #define WIDGET_H
 
 #include <QWidget>
-//#define __DONT_USE_PLAYER
-#define __DONT_USE_WAVEFORM
-#ifndef __DONT_USE_PLAYER
-#include <psndplayer.h>
-#endif
 
-#include <Waveform.h>
-#include <WaveformScrollBar.h>
-#include <WaveformRuler.h>
-#include <WaveformCursorProxy.h>
-#include <WaveformSelectionProxy.h>
-#include <waveformtextproxy.h>
+#include <psndplayer.h>
+#include "waveform.h"
+#include <waveformscrollbar.h>
+#include <waveformruler.h>
+#include <waveformcursorproxy.h>
+#include <waveformselectionproxy.h>
+#include "waveformtextproxy.h"
 #include <waveformbuffer.h>
-#include <waveformthread.h>
-#include <TimeLabel.h>
-#include <SndFile.h>
+//#include <waveformthread.h>
+//#include <TimeLabel.h>
+//#include <SndFile.h>
 //#include <sndfile.h>
 
-//using namespace QWave2;
 
 namespace Ui {
 class PlayerWidget;
@@ -69,7 +64,7 @@ private slots:
 
 private:
     WaveFormBuffer *waveFormBuffer;
-    SndFile* soundfile;
+    //SndFile* soundfile;
     WaveformRuler* ruler;
     WaveformScrollBar* sb;
     WaveformCursorProxy* waveformCursorProxy;

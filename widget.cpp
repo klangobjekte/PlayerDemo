@@ -4,7 +4,7 @@
 #include <QMessageBox>
 #include <map>
 #include "psndevents.h"
-#include <WaveformVRuler.h>
+
 QString
 time2str(double t, int e)
 {
@@ -252,42 +252,59 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
     qDebug() << "on_loadWavePushButton_clicked";
 
     currentSources = player->getCurrentSources();
+
     map<psnd_string,MediaSource*>::iterator sourceIter;
     psnd_string filename;
     //map<psnd_string,WaveformMap >::iterator witer;
     int gridCurRow = 0;
     Waveform* waveform =0;
-
+    MediaSource *mediaSource = 0;
     unregisterWaveform();
+#ifdef _WIN32
+        filename = ui->lineEdit->text().toStdWString();
+#else
+       filename = ui->lineEdit->text().toStdString();
+#endif
 
-    for (sourceIter= currentSources.begin();sourceIter != currentSources.end();sourceIter++){
-        filename = sourceIter->first;
-        if(filename == ui->lineEdit->text().toStdString()){
+    //for (sourceIter= currentSources.begin();sourceIter != currentSources.end();sourceIter++){
+    if(currentSources.find(filename) != currentSources.end()){
+
+            //filename = sourceIter->first;
+            mediaSource = currentSources[filename];
             currentFile = filename;
-            double len = sourceIter->second->duration();
+            double len = mediaSource->duration();
             qDebug() << "len: " << len;
 
             ui->seekSlider->setRange(0, len*1000);
+
             if(waveforms.find(filename) == waveforms.end()){
-                waveFormBuffer = new WaveFormBuffer(filename.c_str(),
-                                                sourceIter->second->outData()->outSampleRate,
-                                                sourceIter->second->outData()->channels,
-                                                sourceIter->second->outData()->num_frames,
+
+                waveFormBuffer = new WaveFormBuffer(this,
+                                                filename.c_str(),
+                                                mediaSource->outData()->outSampleRate,
+                                                mediaSource->outData()->channels,
+                                                mediaSource->outData()->num_frames,
                                                 len);
+
+
                 //qDebug() << "calling loadBuffer 1 --------------------------------------";
-                //waveFormBuffer->loadBuffer(sourceIter->second->outData()->data,
+                //waveFormBuffer->loadBuffer(mediaSource->outData()->data,
                 //                       0,
                 //                       len);
-                for (int ch=0; ch<sourceIter->second->outData()->channels; ++ch)
+                for (int ch=0; ch<mediaSource->outData()->channels; ++ch)
                 {
                     //WaveformVRuler *verticalRuler = new WaveformVRuler(this);
                     waveform = new Waveform  (waveFormBuffer, ch, 0.0, len, this); //4ter Parameter ist Duration
                     //waveform->setObjectName(tr("waveform%1").arg(_sndfiles.size()));
                     //waveform->setWaveformCursorShape(_waveformCursorShape);
                     //ui->gridLayout->addWidget(verticalRuler, gridCurRow, 0); // Vertical Ruler (WaveformRuler)
+
                     waveformSelectionProxy->registerWaveform(waveform);
+
                     waveformCursorProxy->registerWaveform(waveform);
-                    waveformScrolBar->registerWaveform(waveform);
+
+                    //waveformScrolBar->registerWaveform(waveform);
+
                     connect(waveformSelectionProxy,SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
                             waveform,SLOT(setSelectionParameter(double,double,Waveform*)));
                     connect(ui->cursorGroupBox,SIGNAL(buttonClicked(int)),
@@ -296,6 +313,7 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
 
 
                 }// for channels
+
             }//! existing waveform?
 
             waveformMap = waveforms[filename];
@@ -304,7 +322,7 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
             for(channeliter = waveformMap.begin();channeliter != waveformMap.end();channeliter++){
                 waveform = channeliter->second;
                 if(runOnce){
-                    waveform->getWaveFormBuffer()->noCopyBuffer(sourceIter->second->outData()->data,0,len);
+                    waveform->getWaveFormBuffer()->noCopyBuffer(mediaSource->outData()->data,0,len);
                     runOnce = false;
                 }
                 ui->gridLayout->addWidget(waveform, gridCurRow, 0); // Waveform
@@ -338,17 +356,21 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
                 //soundfile->setColor(waveformColor,backgroundColor);
                 waveform->display(0,len,true);
                 ++gridCurRow;
+
             }//! iterchannels
+
         }// if filename
+
       //player->resume();
 
-       QSlider *hzoomSlider = new QSlider(this);
-       hzoomSlider->setOrientation(Qt::Horizontal);
-       hzoomSlider->setFixedWidth(300);
-       hzoomSlider->setMinimum(-10);
-       hzoomSlider->setMaximum(10);
+       //QSlider *hzoomSlider = new QSlider(this);
+       //hzoomSlider->setOrientation(Qt::Horizontal);
+       //hzoomSlider->setFixedWidth(300);
+       //hzoomSlider->setMinimum(-10);
+       //hzoomSlider->setMaximum(10);
        //grid->addWidget(hzoomSlider, 4,0);
-    }//! for sources
+    //}//! for sources
+
 }
 
 //! fuer Mainwindow
@@ -394,16 +416,22 @@ void PlayerWidget::unregisterWaveform(){
         if(!(ui->gridLayout->itemAtPosition(i,0)==0))
             ui->gridLayout->removeItem(ui->gridLayout->itemAtPosition(i,0));
     }
+
     map<psnd_string,WaveformMap >::iterator witer;
     witer  = waveforms.find(currentFile);
-    WaveformMap wMap = witer->second;
-    WaveformMap::iterator channeliter;
-    for(channeliter = wMap.begin();channeliter != wMap.end();channeliter++){
-        Waveform *waveform = channeliter->second;
-        //waveformCursorProxy->unregisterWaveform(waveform);
-        //waveformSelectionProxy->unregisterWaveform(waveform);
-        //ruler->disconnectWaveform();
-        waveform->hide();
+    if(witer!= waveforms.cend()){
+
+        WaveformMap wMap = witer->second;
+
+        WaveformMap::iterator channeliter;
+        for(channeliter = wMap.begin();channeliter != wMap.end();channeliter++){
+            Waveform *waveform = channeliter->second;
+            //waveformCursorProxy->unregisterWaveform(waveform);
+            //waveformSelectionProxy->unregisterWaveform(waveform);
+            //ruler->disconnectWaveform();
+            waveform->hide();
+        }
+
     }
 }
 
