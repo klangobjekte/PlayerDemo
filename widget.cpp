@@ -94,14 +94,22 @@ PlayerWidget::~PlayerWidget()
 void PlayerWidget::on_browsePushButton_clicked(){
     //QDesktopServices::storageLocation(QDesktopServices::MusicLocation));
 
-    QString home;
+    QString home = QDir::homePath();
 #ifdef WIN32
     home = "C:/Qt_Projekte/testfolder/_no_prob/_Time";
 #else
-   home =  "/Users/Admin/Documents/python/_testfiles/testfolder/_no_prob/_Time";
+   home =  tr("/Users/admin7/Developer7/Testfiles/testfolder");
 #endif
-    QStringList files = QFileDialog::getOpenFileNames(
-        this,"Open Audio File",
+    qDebug() << "File Dialog home path:" << home;
+    QFileDialog dialog(this);
+    //dialog.setOption(QFileDialog::DontUseNativeDialog,true);
+
+    //dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setDirectory(home);
+    QStringList files;
+    QString file;
+    files = dialog.getOpenFileNames(
+        this,tr("Open Audio File"),
         home,
          "All (**)"
             );
@@ -293,7 +301,7 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
                     waveformSelectionProxy->registerWaveform(waveform);
                     waveformCursorProxy->registerWaveform(waveform);
 
-                    waveformScrolBar->registerWaveform(waveform);
+                    //waveformScrolBar->registerWaveform(waveform);
 
                     connect(waveformSelectionProxy,SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
                             waveform,SLOT(setSelectionParameter(double,double,Waveform*)));
