@@ -46,6 +46,7 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     player(new PSndPlayer()),
     waveformCursorProxy(new WaveformCursorProxy(this)),
     waveformSelectionProxy(new WaveformSelectionProxy(this)),
+    waveformScrolBar(new WaveformScrollBar(this)),
     paused(false),
     hasRuler(false),
     speed(1)
@@ -74,7 +75,7 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     ui->cursorGroupBox->setId(ui->cursorIbeamButton,1);
     ui->cursorGroupBox->setId(ui->cursorOpenHandButton,2);
 
-    waveformScrolBar = new WaveformScrollBar(this);
+    //waveformScrolBar = new WaveformScrollBar(this);
     ui->scrollBarLayout->addWidget(waveformScrolBar);
     ui->hZoomSlider->setRange(1,9999);
     connect(waveformSelectionProxy, SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
@@ -293,7 +294,6 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
                     waveformSelectionProxy->registerWaveform(waveform);
                     waveformCursorProxy->registerWaveform(waveform);
 
-                    waveformScrolBar->registerWaveform(waveform);
 
                     connect(waveformSelectionProxy,SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
                             waveform,SLOT(setSelectionParameter(double,double,Waveform*)));
@@ -339,7 +339,7 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
                 //        waveform, SLOT(setAmplitudeRatio(double)));
                 //connect(this,SIGNAL(waveformCursorChanged(int)),
                 //        waveform,SLOT(setWaveformCursorShape(int)));
-
+                waveformScrolBar->registerWaveform(waveform);
 
                 //QColor waveformColor(QColor(42, 38, 38));
                 //QColor backgroundColor(QColor(85, 85, 127));
@@ -418,6 +418,7 @@ void PlayerWidget::unregisterWaveform(){
             Waveform *waveform = channeliter->second;
             //waveformCursorProxy->unregisterWaveform(waveform);
             //waveformSelectionProxy->unregisterWaveform(waveform);
+            waveformScrolBar->unregisterWaveform(waveform);
             //ruler->disconnectWaveform();
             waveform->hide();
         }
