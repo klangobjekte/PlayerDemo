@@ -348,7 +348,6 @@ void PlayerWidget::on_loadWavePushButton_clicked(){
                 //connect(this,SIGNAL(waveformCursorChanged(int)),
                 //        waveform,SLOT(setWaveformCursorShape(int)));
 
-
                 //QColor waveformColor(QColor(42, 38, 38));
                 //QColor backgroundColor(QColor(85, 85, 127));
                 //soundfile->setColor(waveformColor,backgroundColor);
