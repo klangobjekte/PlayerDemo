@@ -23,10 +23,8 @@ FORMS    += widget.ui
 DEFINES = __STDC_CONSTANT_MACROS
 
 win32 {
-
         #damit es auch VS schafft eine .lib zu erstellen
         DEFINES += -DDLLEXPORT=Q_DECL_IMPORT
-
         INCLUDEPATH += "C:/Program Files/Microsoft SDKs/Windows/v7.0A/include"
         INCLUDEPATH += . \
         "C:/Qt_Projekte/meta_mp" \
