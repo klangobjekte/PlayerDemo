@@ -46,6 +46,8 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     player(new PSndPlayer()),
     waveformCursorProxy(new WaveformCursorProxy(this)),
     waveformSelectionProxy(new WaveformSelectionProxy(this)),
+    ruler(new WaveformRuler(true,this)),
+    waveformScrolBar(new WaveformScrollBar(this)),
     paused(false),
     hasRuler(false),
     speed(1)
@@ -66,22 +68,24 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
 
 
     ui->seekSlider->setRange(0, 10*1000);
-    ruler = new WaveformRuler(true, this);
-    ui->rulerLayout_->addWidget(ruler);
-    //ui->gridLayout->addWidget(ruler,0,1);
 
+    ui->rulerLayout_->addWidget(ruler);
+    ui->scrollBarLayout->addWidget(waveformScrolBar);
     ui->cursorGroupBox->setId(ui->cursorArrowButton,0);
     ui->cursorGroupBox->setId(ui->cursorIbeamButton,1);
     ui->cursorGroupBox->setId(ui->cursorOpenHandButton,2);
 
-    waveformScrolBar = new WaveformScrollBar(this);
-    ui->scrollBarLayout->addWidget(waveformScrolBar);
+
     ui->hZoomSlider->setRange(1,9999);
     connect(waveformSelectionProxy, SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
         this, SLOT(changeSelection(double,double,Waveform*)));
 
     ui->vZoomSlider->setValue(50);
     ui->vZoomSlider->setRange(1,100);
+
+
+
+
 }
 
 PlayerWidget::~PlayerWidget()
@@ -89,6 +93,10 @@ PlayerWidget::~PlayerWidget()
     player->getPlayerTicker()->unregisterReceiver(this);
     delete player;
     delete ui;
+}
+
+void PlayerWidget::setInitialFile(QString text){
+    ui->lineEdit->setText(text);
 }
 
 void PlayerWidget::on_browsePushButton_clicked(){
@@ -140,11 +148,12 @@ void PlayerWidget::on_addAndPlayPushButton_clicked(){
     }
     player->pause();
     #ifdef WIN32
-        player->addFile(finfo.filePath().toStdWString());
+        if(player->addFile(finfo.filePath().toStdWString()){
     #else
-        player->addAndPlayFile(finfo.filePath().toStdString().c_str());
+        if(player->addAndPlayFile(finfo.filePath().toStdString().c_str())){
     #endif
     on_loadWavePushButton_clicked();
+    }
 }
 
 void PlayerWidget::on_addPushButton_clicked(){
@@ -220,7 +229,7 @@ void PlayerWidget::on_pausePushButton_clicked(){
 void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString id){
     int _id =0;
 
-//#define _NEWCPP
+#define _NEWCPP
 #ifdef _NEWCPP
     //! c++11
     for(auto iter: outDevices){

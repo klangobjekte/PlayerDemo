@@ -29,8 +29,10 @@ class PlayerWidget : public QWidget
 public:
     explicit PlayerWidget(QWidget *parent = 0);
     ~PlayerWidget();
+    void setInitialFile(QString text);
 
 public slots:
+
     void on_reverseButton_clicked(bool checked);
     void on_browsePushButton_clicked();
     void on_addAndPlayPushButton_clicked();
