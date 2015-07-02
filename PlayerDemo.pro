@@ -27,24 +27,16 @@ win32 {
         #damit es auch VS schafft eine .lib zu erstellen
         DEFINES += -DDLLEXPORT=Q_DECL_IMPORT
 
-        INCLUDEPATH += "C:/Program Files/Microsoft SDKs/Windows/v7.0A/include"
-        INCLUDEPATH += . \
-        "C:/Qt_Projekte/meta_mp" \
-        "C:\Program Files\Mega-Nerd\libsndfile\include" \
-        "C:/Qt_Projekte/PSndPlayer" \
+
+        INCLUDEPATH += "C:\Program Files\Mega-Nerd\libsndfile\include"
         #"C:/Qt_Projekte/PSndWave/QWave2" \
         #"C:/Qt_Projekte/PSndWave" \
-        "C:/Program Files/portaudio-r1891-build/include" \
+        INCLUDEPATH += "C:/Program Files/portaudio-r1891-build/include" \
         "C:/Program Files/ffmpeg-20131202-git-e3d7a39-win32-dev/include"
         #"C:/Program Files/ffmpeg-20131202-git-e3d7a39-win32-dev/include"
 
         #LIBS += "C:/Qt_Projekte/build-PSndPlayer-Desktop_MinGw-Debug/debug/PSndPlayer.dll"
         #LIBS += "C:/Qt_Projekte/build-PSndWave-Desktop_Qt_5_0_2_MinGW_32bit-Release/release/PSndWave.dll"
-
-        #LIBS += "C:/Qt_Projekte/build-PSndWave-Desktop_Qt_5_2_0_MSVC2012_32bit-Debug/debug/PSndWave.lib"
-        LIBS += "C:/Qt_Projekte/build-PSndPlayer-Desktop_Qt_5_2_0_MSVC2012_32bit-Debug/debug/PSndPlayer.lib"
-        #LIBS += "C:/Qt_Projekte/build-PSndWave-Desktop_MinGw-Debug/release/PSndWave.dll"
-        LIBS+= "C:/Qt_Projekte/meta-build-Desktop_Qt_4_8_4_MinGw2-Release/release/libmeta.a"
         LIBS += "C:/Program Files/Mega-Nerd/libsndfile/lib/libsndfile-1.lib"
         #LIBS += "C:/Program Files/ffmpeg-20131202-git-e3d7a39-win32-shared/bin/avformat-55.dll"
         #LIBS += "C:/Program Files/ffmpeg-20131202-git-e3d7a39-win32-shared/bin/avcodec-55.dll"
@@ -52,6 +44,30 @@ win32 {
         #LIBS += "C:/Program Files/mpg123-1.15.0-x86/libmpg123-0.dll"
 
         LIBS += "C:\Program Files\portaudio-r1891-build\lib\Win32\Release\portaudio_x86.lib"
+
+}
+
+win32-msvc2012{
+ INCLUDEPATH += "C:/Program Files/Microsoft SDKs/Windows/v7.0A/include"
+        INCLUDEPATH += . \
+        "C:/Qt_Projekte/meta_mp" \
+        "C:\Program Files\Mega-Nerd\libsndfile\include" \
+        "C:/Qt_Projekte/PSndPlayer"
+        #LIBS += "C:/Qt_Projekte/build-PSndWave-Desktop_Qt_5_2_0_MSVC2012_32bit-Debug/debug/PSndWave.lib"
+        LIBS += "C:/Qt_Projekte/build-PSndPlayer-Desktop_Qt_5_2_0_MSVC2012_32bit-Debug/debug/PSndPlayer.lib"
+        #LIBS += "C:/Qt_Projekte/build-PSndWave-Desktop_MinGw-Debug/release/PSndWave.dll"
+        LIBS+= "C:/Qt_Projekte/meta-build-Desktop_Qt_4_8_4_MinGw2-Release/release/libmeta.a"
+
+}
+
+win32-msvc2013{
+        INCLUDEPATH += . \
+        "C:/QtProjects/meta_mp" \
+        "C:/QtProjects/PSndPlayer"
+        #LIBS += "C:/Qt_Projekte/build-PSndWave-Desktop_Qt_5_2_0_MSVC2012_32bit-Debug/debug/PSndWave.lib"
+        LIBS += "C:/QtProjects/build-PSndPlayer-Desktop_Qt_5_4_2_MSVC2013_OpenGL_32bit-Debug/debug/PSndPlayer.lib"
+        #LIBS += "C:/Qt_Projekte/build-PSndWave-Desktop_MinGw-Debug/release/PSndWave.dll"
+        LIBS+= "C:/QtProjects/build-meta-Desktop_Mingw_Qt4_8_6-Release/release/libmeta.a"
 
 }
 
