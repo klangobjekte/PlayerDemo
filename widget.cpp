@@ -39,6 +39,53 @@ time2str(double t, int e)
   return QString(s);
 }
 
+//! make a normalized string for hfs formated Media
+psnd_char *makeCharFromQString(QString qstring)
+{
+    QString utfstring;
+    #ifdef WIN32
+            setlocale(LC_ALL, "");
+            //FileNameHelper *fileNameHelper;
+            //fileNameHelper = new FileNameHelper;
+            if(fileSystem(qstring)== FILESYSTEM_HFS){
+                utfstring = qstring.normalized(QString::NormalizationForm_KD);
+            }
+            else{
+                utfstring = qstring;
+            }
+            //qDebug() << "makeCharFromString: " <<utfstring;
+            wstring w_string = utfstring.toStdWString();
+            psf_char *filenamep = NULL;
+            //! Kopiere in std::vector inklusive Nullterminierung
+            vector<psf_char> vec(w_string.begin(), w_string.end());
+            vec.push_back(L'\0');
+            //! Extrahiere wchar_t*
+            filenamep = &vec[0];
+
+            //! Speicherplatz fuer _fileName
+            //! damit dieser ueber die Funktion hinaus
+            //! gueltig ist!
+            int len = psf_strlen(filenamep);
+            psf_char *charstring = 0;
+            charstring = new psf_char[len+1];
+            psf_csncpy(charstring,filenamep,len);
+            charstring[len] = 0;
+            //! Windows alternative normalisierung ueber Qt:
+            //! Der normalisierte (combined UTF - gewandelte) path
+            //! wird gewandelt in staticpath array kopiert:
+            // FoldString( MAP_COMPOSITE ,filenamep,MAXPATHNAMELENGTH,
+                    // _fileName,MAXPATHNAMELENGTH);
+        #else
+            psnd_char *charstring = 0;
+            utfstring = qstring.toUtf8();
+            string strAscii = utfstring.toStdString();
+            int len = strlen(strAscii.c_str());
+            charstring  = new  psnd_char [len+1];
+            psnd_csncpy(charstring,strAscii.c_str(),len);
+            charstring[len] = 0;
+#endif
+            return charstring;
+}
 
 PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
@@ -46,6 +93,8 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     player(new PSndPlayer()),
     waveformCursorProxy(new WaveformCursorProxy(this)),
     waveformSelectionProxy(new WaveformSelectionProxy(this)),
+    ruler(new WaveformRuler(true,this)),
+    waveformScrolBar(new WaveformScrollBar(this)),
     paused(false),
     hasRuler(false),
     speed(1)
@@ -66,22 +115,24 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
 
 
     ui->seekSlider->setRange(0, 10*1000);
-    ruler = new WaveformRuler(true, this);
-    ui->rulerLayout_->addWidget(ruler);
-    //ui->gridLayout->addWidget(ruler,0,1);
 
+    ui->rulerLayout_->addWidget(ruler);
+    ui->scrollBarLayout->addWidget(waveformScrolBar);
     ui->cursorGroupBox->setId(ui->cursorArrowButton,0);
     ui->cursorGroupBox->setId(ui->cursorIbeamButton,1);
     ui->cursorGroupBox->setId(ui->cursorOpenHandButton,2);
 
-    waveformScrolBar = new WaveformScrollBar(this);
-    ui->scrollBarLayout->addWidget(waveformScrolBar);
+
     ui->hZoomSlider->setRange(1,9999);
     connect(waveformSelectionProxy, SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
         this, SLOT(changeSelection(double,double,Waveform*)));
 
     ui->vZoomSlider->setValue(50);
     ui->vZoomSlider->setRange(1,100);
+
+
+
+
 }
 
 PlayerWidget::~PlayerWidget()
@@ -91,6 +142,10 @@ PlayerWidget::~PlayerWidget()
     delete ui;
 }
 
+void PlayerWidget::setInitialFile(QString text){
+    ui->lineEdit->setText(text);
+}
+
 void PlayerWidget::on_browsePushButton_clicked(){
     //QDesktopServices::storageLocation(QDesktopServices::MusicLocation));
 
@@ -98,7 +153,8 @@ void PlayerWidget::on_browsePushButton_clicked(){
 #ifdef WIN32
     home = "C:/Qt_Projekte/testfolder/_no_prob/_Time";
 #else
-   home =  tr("/Users/admin7/Developer7/Testfiles/testfolder");
+   //home =  tr("/Users/admin/music");
+    home= home>"/music";
 #endif
     qDebug() << "File Dialog home path:" << home;
     QFileDialog dialog(this);
@@ -107,7 +163,6 @@ void PlayerWidget::on_browsePushButton_clicked(){
     //dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setDirectory(home);
     QStringList files;
-    QString file;
     files = dialog.getOpenFileNames(
         this,tr("Open Audio File"),
         home,
@@ -140,11 +195,14 @@ void PlayerWidget::on_addAndPlayPushButton_clicked(){
     }
     player->pause();
     #ifdef WIN32
-        player->addFile(finfo.filePath().toStdWString());
+        if(player->addFile(finfo.filePath().toStdWString()){
     #else
-        player->addAndPlayFile(finfo.filePath().toStdString().c_str());
+        if(player->addFile( ui->lineEdit->text() .toStdString().c_str()))
+        //if(player->addFile( makeCharFromQString( ui->lineEdit->text())))
+        {
     #endif
     on_loadWavePushButton_clicked();
+    }
 }
 
 void PlayerWidget::on_addPushButton_clicked(){
@@ -220,7 +278,7 @@ void PlayerWidget::on_pausePushButton_clicked(){
 void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString id){
     int _id =0;
 
-//#define _NEWCPP
+#define _NEWCPP
 #ifdef _NEWCPP
     //! c++11
     for(auto iter: outDevices){

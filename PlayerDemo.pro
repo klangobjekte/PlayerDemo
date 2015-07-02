@@ -74,19 +74,21 @@ win32-msvc2013{
 macx {
 
 
-    QMAKE_LFLAGS += -F/System/Library/Frameworks \
-                    -F//Developer/Library/PrivateFrameworks
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
-    QMAKE_CXXFLAGS += -mmacosx-version-min=10.5
+    #QMAKE_LFLAGS += -F/System/Library/Frameworks \
+    #                -F//Developer/Library/PrivateFrameworks
+    #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
+    #QMAKE_CXXFLAGS += -mmacosx-version-min=10.5
 
         #INCLUDEPATH += /Developer/SDKs/libsndfile/libsndfile_86_10.5/local/include
         #INCLUDEPATH += /Developer/Qt_projekte/PSndWave
         #INCLUDEPATH += /Developer/Qt_projekte/PSndWave/QWave2
-        INCLUDEPATH += /Developer/Qt_Projekte/PSndPlayer
+        #INCLUDEPATH += /Developer/Qt_Projekte/PSndPlayer
         INCLUDEPATH += /Users/admin/Developer/QtProjects/PSndPlayer
+    INCLUDEPATH +=    /usr/local/Cellar/portaudio/19.20111121/include
+    INCLUDEPATH +=    /usr/local/Cellar/libsndfile/1.0.25/include
 
-        INCLUDEPATH += . \
-        /usr/local/include
+        #INCLUDEPATH += . \
+        #/usr/local/include
         #../src
 
         #LIBS += -L/Developer/Qt_Projekte/PSndWave-build-Desktop_GCC_x86_32bit-Debug
@@ -98,6 +100,9 @@ macx {
         #Carbon \
         #-framework \
         #CoreAudio
+        #LIBS += -L/usr/local/lib
+        LIBS +=    -L/usr/local/Cellar/portaudio/19.20111121/lib
+        LIBS +=    -L/usr/local/Cellar/libsndfile/1.0.25/lib
         LIBS += -L/usr/local/lib
         LIBS += -lsndfile \
                 -lPSndPlayer
