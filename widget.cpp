@@ -38,7 +38,7 @@ time2str(double t, int e)
   sprintf(&s[strlen(s)],f,msec);
   return QString(s);
 }
-
+#ifndef WIN32
 //! make a normalized string for hfs formated Media
 psnd_char *makeCharFromQString(QString qstring)
 {
@@ -86,6 +86,7 @@ psnd_char *makeCharFromQString(QString qstring)
 #endif
             return charstring;
 }
+#endif
 
 PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
@@ -151,7 +152,7 @@ void PlayerWidget::on_browsePushButton_clicked(){
 
     QString home = QDir::homePath();
 #ifdef WIN32
-    home = "C:/Qt_Projekte/testfolder/_no_prob/_Time";
+    home = "Z:/Users/admin/music";
 #else
    //home =  tr("/Users/admin/music");
     home= home>"/music";
@@ -195,7 +196,7 @@ void PlayerWidget::on_addAndPlayPushButton_clicked(){
     }
     player->pause();
     #ifdef WIN32
-        if(player->addFile(finfo.filePath().toStdWString()){
+        if(player->addFile(finfo.filePath().toStdWString())){
     #else
         if(player->addFile( ui->lineEdit->text() .toStdString().c_str()))
         //if(player->addFile( makeCharFromQString( ui->lineEdit->text())))
