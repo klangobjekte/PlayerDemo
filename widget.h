@@ -31,6 +31,7 @@ public:
     ~PlayerWidget();
     void setInitialFile(QString text);
 
+
 public slots:
 
     void on_reverseButton_clicked(bool checked);
@@ -63,6 +64,7 @@ signals:
     
 private slots:
     void on_tableWidget_cellPressed(int row, int column);
+    void loadWaveform();
 
 private:
     WaveFormBuffer *waveFormBuffer;

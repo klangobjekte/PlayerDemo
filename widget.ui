@@ -76,7 +76,7 @@
      <x>10</x>
      <y>114</y>
      <width>1201</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="rulerLayout_">
@@ -248,7 +248,7 @@
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QLabel" name="label">
+     <widget class="QLabel" name="label_position">
       <property name="text">
        <string>position</string>
       </property>
@@ -328,7 +328,14 @@
       </attribute>
      </widget>
     </item>
-    <item row="2" column="0" colspan="11">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_duration">
+      <property name="text">
+       <string>duration</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1" colspan="10">
      <widget class="QSlider" name="hZoomSlider">
       <property name="toolTip">
        <string>hZoomSlider</string>
