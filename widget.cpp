@@ -439,9 +439,7 @@ void PlayerWidget::on_pausePushButton_clicked(){
 
 void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString id){
     int _id =0;
-
-    #define _NEWCPP
-    #ifdef _NEWCPP
+#if QT_VERSION >= 0x050000
     //! c++11
     for(auto iter: outDevices){
         if(iter.second == id.toStdString().c_str()){

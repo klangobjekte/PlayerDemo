@@ -93,8 +93,8 @@ macx {
         INCLUDEPATH += /Developer/Qt_Projekte/PSndPlayer
 
 
-        INCLUDEPATH += . \
-        /usr/local/include
+        #INCLUDEPATH += . \
+        #/usr/local/include
         #../src
 
         #LIBS += -L/Developer/Qt_Projekte/PSndWave-build-Desktop_GCC_x86_32bit-Debug
