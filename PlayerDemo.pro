@@ -90,7 +90,7 @@ macx {
         #INCLUDEPATH += /Developer/SDKs/libsndfile/libsndfile_86_10.5/local/include
         #INCLUDEPATH += /Developer/Qt_projekte/PSndWave
         #INCLUDEPATH += /Developer/Qt_projekte/PSndWave/QWave2
-        #INCLUDEPATH += /Developer/Qt_Projekte/PSndPlayer
+        INCLUDEPATH += /Developer/Qt_Projekte/PSndPlayer
 
 
         INCLUDEPATH += . \
