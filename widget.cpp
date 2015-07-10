@@ -113,7 +113,11 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     }
     //! Set the Combobox for available Samplerates of active AudioDevice
     for(auto iter: outputDevices){
+#ifdef _WIN32
         if(iter.second.name == ui->devicesComboBox->currentText().toStdWString().c_str()){
+ #else
+        if(iter.second.name == ui->devicesComboBox->currentText().toStdString().c_str()){
+#endif
             OutDevice currentDevice = iter.second;
             for(auto iter: currentDevice.availableSamplerates){
                 QString sr = QString::fromStdString(iter.second);
@@ -463,11 +467,15 @@ void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString item){
     qDebug() << "QT Version 5";
     //! c++11
     for(auto iter: outputDevices){
+        #ifdef _WIN32
         if(iter.second.name == item.toStdWString().c_str()){
-        _id =  iter.second.deviceIndex;
+        #else
+        if(iter.second.name == item.toStdString().c_str()){
+        #endif
+            _id =  iter.second.deviceIndex;
         }
     }
-    #else
+#else
     qDebug() << "QT Version 4";
     map<int,string>::iterator iter;
     for(iter = outDevices.begin();iter != outDevices.end();++iter) {
