@@ -142,58 +142,37 @@
     <rect>
      <x>10</x>
      <y>0</y>
-     <width>816</width>
+     <width>881</width>
      <height>101</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_3">
-    <item row="1" column="10">
-     <widget class="QRadioButton" name="reverseButton">
+    <item row="1" column="6">
+     <widget class="QPushButton" name="repeatPushButton">
+      <property name="toolTip">
+       <string>repeatPushButton</string>
+      </property>
       <property name="text">
-       <string>Rev</string>
+       <string>L</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+      <property name="default">
+       <bool>false</bool>
+      </property>
+      <property name="flat">
+       <bool>false</bool>
       </property>
      </widget>
     </item>
-    <item row="0" column="8" colspan="3">
-     <widget class="QComboBox" name="devicesComboBox"/>
-    </item>
-    <item row="0" column="4">
-     <widget class="QPushButton" name="loadWavePushButton">
+    <item row="1" column="4">
+     <widget class="QPushButton" name="playPushButton">
       <property name="toolTip">
-       <string>loadWavePushButton</string>
+       <string>playPushButton</string>
       </property>
       <property name="text">
-       <string>wave</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QPushButton" name="addAndPlayPushButton">
-      <property name="toolTip">
-       <string>addAndPlayPushButton</string>
-      </property>
-      <property name="text">
-       <string>ad +</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2">
-     <widget class="QPushButton" name="addPushButton">
-      <property name="toolTip">
-       <string>addPushButton</string>
-      </property>
-      <property name="text">
-       <string>Add</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="3">
-     <widget class="QPushButton" name="removePushButton">
-      <property name="toolTip">
-       <string>removePushButton</string>
-      </property>
-      <property name="text">
-       <string>Rem</string>
+       <string>&gt;</string>
       </property>
      </widget>
     </item>
@@ -204,6 +183,49 @@
       </property>
       <property name="text">
        <string>&lt;&lt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3">
+     <widget class="QPushButton" name="stopPushButton">
+      <property name="toolTip">
+       <string>stopPushButton</string>
+      </property>
+      <property name="text">
+       <string>.</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="6">
+     <widget class="QPushButton" name="cursorArrowButton">
+      <property name="toolTip">
+       <string>cursorArrowButton</string>
+      </property>
+      <property name="text">
+       <string>A</string>
+      </property>
+      <attribute name="buttonGroup">
+       <string notr="true">cursorGroupBox</string>
+      </attribute>
+     </widget>
+    </item>
+    <item row="1" column="7">
+     <widget class="QPushButton" name="pausePushButton">
+      <property name="toolTip">
+       <string>pausePushButton</string>
+      </property>
+      <property name="text">
+       <string>II</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="4">
+     <widget class="QPushButton" name="loadWavePushButton">
+      <property name="toolTip">
+       <string>loadWavePushButton</string>
+      </property>
+      <property name="text">
+       <string>wave</string>
       </property>
      </widget>
     </item>
@@ -227,23 +249,33 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="3">
-     <widget class="QPushButton" name="stopPushButton">
+    <item row="0" column="2">
+     <widget class="QPushButton" name="addPushButton">
       <property name="toolTip">
-       <string>stopPushButton</string>
+       <string>addPushButton</string>
       </property>
       <property name="text">
-       <string>.</string>
+       <string>Add</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="4">
-     <widget class="QPushButton" name="playPushButton">
+    <item row="0" column="3">
+     <widget class="QPushButton" name="removePushButton">
       <property name="toolTip">
-       <string>playPushButton</string>
+       <string>removePushButton</string>
       </property>
       <property name="text">
-       <string>&gt;</string>
+       <string>Rem</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QPushButton" name="addAndPlayPushButton">
+      <property name="toolTip">
+       <string>addAndPlayPushButton</string>
+      </property>
+      <property name="text">
+       <string>ad +</string>
       </property>
      </widget>
     </item>
@@ -251,35 +283,6 @@
      <widget class="QLabel" name="label_position">
       <property name="text">
        <string>position</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="6">
-     <widget class="QPushButton" name="repeatPushButton">
-      <property name="toolTip">
-       <string>repeatPushButton</string>
-      </property>
-      <property name="text">
-       <string>L</string>
-      </property>
-      <property name="autoDefault">
-       <bool>false</bool>
-      </property>
-      <property name="default">
-       <bool>false</bool>
-      </property>
-      <property name="flat">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="7">
-     <widget class="QPushButton" name="pausePushButton">
-      <property name="toolTip">
-       <string>pausePushButton</string>
-      </property>
-      <property name="text">
-       <string>II</string>
       </property>
      </widget>
     </item>
@@ -296,17 +299,11 @@
       </attribute>
      </widget>
     </item>
-    <item row="0" column="6">
-     <widget class="QPushButton" name="cursorArrowButton">
-      <property name="toolTip">
-       <string>cursorArrowButton</string>
-      </property>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_duration">
       <property name="text">
-       <string>A</string>
+       <string>duration</string>
       </property>
-      <attribute name="buttonGroup">
-       <string notr="true">cursorGroupBox</string>
-      </attribute>
      </widget>
     </item>
     <item row="0" column="7">
@@ -328,13 +325,6 @@
       </attribute>
      </widget>
     </item>
-    <item row="0" column="0">
-     <widget class="QLabel" name="label_duration">
-      <property name="text">
-       <string>duration</string>
-      </property>
-     </widget>
-    </item>
     <item row="2" column="1" colspan="10">
      <widget class="QSlider" name="hZoomSlider">
       <property name="toolTip">
@@ -344,6 +334,36 @@
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
+    </item>
+    <item row="1" column="8">
+     <widget class="QPushButton" name="testPushButton">
+      <property name="text">
+       <string>Test</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="10">
+     <widget class="QRadioButton" name="reverseButton">
+      <property name="text">
+       <string>Rev</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="9">
+     <widget class="QPushButton" name="getInfoPushButton">
+      <property name="toolTip">
+       <string>Print the Information about the Audio File</string>
+      </property>
+      <property name="text">
+       <string>get Info</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="8">
+     <widget class="QComboBox" name="devicesComboBox"/>
+    </item>
+    <item row="0" column="9">
+     <widget class="QComboBox" name="sampleratesComboBox"/>
     </item>
    </layout>
   </widget>

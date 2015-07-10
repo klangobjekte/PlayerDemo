@@ -91,7 +91,7 @@ psnd_char *makeCharFromQString(QString qstring)
 PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PlayerWidget),
-    player(new PSndPlayer()),
+    player(new PSndPlayer(this)),
     waveformCursorProxy(new WaveformCursorProxy(this)),
     waveformSelectionProxy(new WaveformSelectionProxy(this)),
     ruler(new WaveformRuler(true,this)),
@@ -101,13 +101,28 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     speed(1)
 {
     ui->setupUi(this);
-    outDevices = player->audioOutPut()->getOutputDevices();
-    map<int,string>::const_iterator iter;
-    for(iter = outDevices.begin();iter!=outDevices.end();++iter){
-      QString dev = QString::fromStdString(iter->second);
-      //QString dev = QString::fromStdWString(iter->second);
-      ui->devicesComboBox->addItem(dev.toUtf8());
+    outputDevices = player->audioOutPut()->getOutputDevices();
+    //! Set the Combobox for available AudioDevices
+    for(auto iter: outputDevices){
+        QString dev = QString::fromStdString((iter.second).name);
+        ui->devicesComboBox->addItem(dev.toUtf8());
     }
+    //! Set the Combobox for available Samplerates of active AudioDevice
+    for(auto iter: outputDevices){
+        if(iter.second.name == ui->devicesComboBox->currentText().toStdString().c_str()){
+            OutDevice currentDevice = iter.second;
+            for(auto iter: currentDevice.availableSamplerates){
+                QString sr = QString::fromStdString(iter.second);
+                ui->sampleratesComboBox->addItem(sr.toUtf8());
+            }
+
+            QString current = QString::fromStdString(to_string((int)currentDevice.currentSamplerate));
+            qDebug() << "current: " << current;
+            ui->sampleratesComboBox->setCurrentText(current);
+        }
+    }
+    //ui->sampleratesComboBox->setCurrentText();
+
     player->getPlayerTicker()->registerReceiver(this);
     player->getPlayerTicker()->registerReceiver(waveformCursorProxy);
     ui->label_position->setText("0.0000");
@@ -124,7 +139,7 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     ui->cursorGroupBox->setId(ui->cursorOpenHandButton,2);
 
 
-    ui->hZoomSlider->setRange(1,9999);
+    ui->hZoomSlider->setRange(1,299);
     connect(waveformSelectionProxy, SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
         this, SLOT(changeSelection(double,double,Waveform*)));
     ui->vZoomSlider->setValue(50);
@@ -226,6 +241,7 @@ void PlayerWidget::loadWaveform(){
             currentFile = filename;
             double len = mediaSource->duration();
             qDebug() << "len: " << len;
+            qDebug() << "ch: " << mediaSource->outData()->channels;
             ui->seekSlider->setRange(0, len*1000);
             if(waveforms.find(filename) == waveforms.end()){
                 waveFormBuffer = new WaveFormBuffer(this,
@@ -370,7 +386,7 @@ void PlayerWidget::on_addAndPlayPushButton_clicked(){
     //if(player->addFile( makeCharFromQString( ui->lineEdit->text())))
         {
     #endif
-    loadWaveform();
+    //loadWaveform();
     }
 }
 
@@ -437,16 +453,18 @@ void PlayerWidget::on_pausePushButton_clicked(){
 
 }
 
-void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString id){
+void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString item){
     int _id =0;
 #if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    qDebug() << "QT Version 5";
     //! c++11
-    for(auto iter: outDevices){
-        if(iter.second == id.toStdString().c_str()){
-        _id =  iter.first;
+    for(auto iter: outputDevices){
+        if(iter.second.name == item.toStdString().c_str()){
+        _id =  iter.second.deviceIndex;
         }
     }
     #else
+    qDebug() << "QT Version 4";
     map<int,string>::iterator iter;
     for(iter = outDevices.begin();iter != outDevices.end();++iter) {
         if(iter->second == id.toStdString().c_str()){
@@ -468,6 +486,17 @@ void PlayerWidget::on_seekSlider_sliderMoved(int value){
     player->setPosition(value);
     ui->label_position->setText(time2str((double)value/1000,4));
 }
+
+void PlayerWidget::on_seekSlider_sliderPressed()
+{
+    qDebug() << "on_seekSlider_sliderPressed: " ;
+    player->setPosition(ui->seekSlider->value());
+    ui->label_position->setText(time2str((double)ui->seekSlider->value()/1000,4));
+
+}
+
+
+
 
 void PlayerWidget::on_volumeSlider_valueChanged(int value){
     qDebug() << "on_volumeSlider_valueChanged" << value;
@@ -510,4 +539,23 @@ void PlayerWidget::on_hZoomSlider_sliderMoved(int value){
         double len = waveform->getWaveFormBuffer()->getLengthSeconds();
         waveform->display(0,len/value,true);
     }
+}
+
+void PlayerWidget::on_testPushButton_clicked(){
+    player->testbutton();
+}
+
+
+void PlayerWidget::on_getInfoPushButton_pressed()
+{
+    if(player->getCurrentMediasource()){
+        player->getCurrentMediasource()->getInfo();
+    }
+}
+
+
+
+void PlayerWidget::on_sampleratesComboBox_currentTextChanged(const QString &arg1)
+{
+    //player->audioOutPut()->setOutpuDeviceSamplerate(arg1.toStdString().c_str());
 }

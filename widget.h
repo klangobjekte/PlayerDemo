@@ -46,7 +46,7 @@ public slots:
     void on_repeatPushButton_clicked();
     void on_stopPushButton_clicked();
     void on_pausePushButton_clicked();
-    void on_devicesComboBox_currentIndexChanged(QString);
+    void on_devicesComboBox_currentIndexChanged(QString item);
     void customEvent(QEvent *e);
     int getVolume();
     void on_loadWavePushButton_clicked();
@@ -55,8 +55,10 @@ public slots:
     void unregisterWaveform();
     void on_hZoomSlider_sliderMoved(int value);
     void on_seekSlider_sliderMoved(int value);
+
     void on_volumeSlider_valueChanged(int value);
     void on_vZoomSlider_sliderMoved(int value);
+    void on_testPushButton_clicked();
 
 signals:
     void publishWaveformCursorChanged(int);
@@ -65,6 +67,14 @@ signals:
 private slots:
     void on_tableWidget_cellPressed(int row, int column);
     void loadWaveform();
+
+    void on_seekSlider_sliderPressed();
+
+    void on_getInfoPushButton_pressed();
+
+
+
+    void on_sampleratesComboBox_currentTextChanged(const QString &arg1);
 
 private:
     WaveFormBuffer *waveFormBuffer;
@@ -87,6 +97,7 @@ private:
 #ifndef __DONT_USE_PLAYER
     PSndPlayer *player;
     map<int, string> outDevices;
+    map<int,OutDevice> outputDevices;
 #endif
     bool paused;
 
