@@ -117,25 +117,16 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     for(auto iter: outputDevices){
         if(player->audioOutPut()->getCurrentOutputDevice() ==
                 iter.second.deviceIndex){
-#ifdef _WIN32
-          ui->devicesComboBox->setCurrentText(QString::fromStdWString(iter.second.name));
-#else
-            ui->devicesComboBox->setCurrentText(QString::fromStdString(iter.second.name));
-
-#endif
+            ui->devicesComboBox->setCurrentText(QString::psnd_fromStdString(iter.second.name));
         }
     }
 
     //! Set the Combobox for available Samplerates of active AudioDevice
 
     for(auto iter: outputDevices){
-#ifdef _WIN32
-        if(iter.second.name == ui->devicesComboBox->currentText().toStdWString().c_str()){
- #else
-        if(iter.second.name == ui->devicesComboBox->currentText().toStdString().c_str()){
-#endif
+        if(iter.second.name == ui->devicesComboBox->currentText().psnd_toStdString().c_str()){
             OutDevice currentDevice = iter.second;
-            //qDebug() << "current Device in widget: " << QString::fromStdWString(currentDevice.name) << endl;
+            //qDebug() << "current Device in widget: " << QString::psnd_fromStdString(currentDevice.name) << endl;
             //qDebug() << "current Device in widget samplerate: " << QString::fromStdString(currentDevice.currentSamplerate) << endl;
 
             //! set Combobox abailable Samplerates
@@ -266,11 +257,8 @@ void PlayerWidget::loadWaveform(){
     Waveform* waveform =0;
     MediaSource *mediaSource = 0;
     unregisterWaveform();
-#ifdef _WIN32
-        filename = ui->lineEdit->text().toStdWString();
-#else
-       filename = ui->lineEdit->text().toStdString();
-#endif
+    filename = ui->lineEdit->text().psnd_toStdString();
+
     if(currentSources.find(filename) != currentSources.end()){
             mediaSource = currentSources[filename];
             currentFile = filename;
@@ -414,25 +402,18 @@ void PlayerWidget::on_browsePushButton_clicked(){
 void PlayerWidget::on_addAndPlayPushButton_clicked(){
     qDebug() << "on_addAndPlayPushButton_clicked!";
     player->pause();
-    #ifdef WIN32
-    if(player->addFile(ui->lineEdit->text().toStdWString())){
-    #else
-    if(player->addFile( ui->lineEdit->text().toStdString().c_str()))
-    //if(player->addFile( makeCharFromQString( ui->lineEdit->text())))
-        {
-    #endif
-    //loadWaveform();
+
+    if(player->addFile( ui->lineEdit->text().psnd_toStdString().c_str()))
+    {
+        //loadWaveform();
     }
 }
 
 void PlayerWidget::on_addPushButton_clicked(){
     qDebug() << "on_addPushButton_clicked!";
     player->pause();
-    #ifdef WIN32
-        player->addFile(ui->lineEdit->text().toStdWString());
-    #else
-        player->addFile(ui->lineEdit->text().toStdString().c_str());
-    #endif
+    player->addFile(ui->lineEdit->text().psnd_toStdString().c_str());
+
 }
 
 void PlayerWidget::on_removePushButton_clicked(){
