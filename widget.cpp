@@ -117,7 +117,12 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
     for(auto iter: outputDevices){
         if(player->audioOutPut()->getCurrentOutputDevice() ==
                 iter.second.deviceIndex){
+#ifdef _WIN32
           ui->devicesComboBox->setCurrentText(QString::fromStdWString(iter.second.name));
+#else
+            ui->devicesComboBox->setCurrentText(QString::fromStdString(iter.second.name));
+
+#endif
         }
     }
 
@@ -130,8 +135,8 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
         if(iter.second.name == ui->devicesComboBox->currentText().toStdString().c_str()){
 #endif
             OutDevice currentDevice = iter.second;
-            qDebug() << "current Device in widget: " << QString::fromStdWString(currentDevice.name) << endl;
-            qDebug() << "current Device in widget samplerate: " << QString::fromStdString(currentDevice.currentSamplerate) << endl;
+            //qDebug() << "current Device in widget: " << QString::fromStdWString(currentDevice.name) << endl;
+            //qDebug() << "current Device in widget samplerate: " << QString::fromStdString(currentDevice.currentSamplerate) << endl;
 
             //! set Combobox abailable Samplerates
             for(auto iter: currentDevice.availableSamplerates){
