@@ -102,6 +102,7 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
 {
     ui->setupUi(this);
     outputDevices = player->audioOutPut()->getOutputDevices();
+
     //! Set the Combobox for available AudioDevices
     for(auto iter: outputDevices){
 #ifdef _WIN32
@@ -111,7 +112,17 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
 #endif
         ui->devicesComboBox->addItem(dev.toUtf8());
     }
+
+    //! set the Combobox CurrentoutputDevic
+    for(auto iter: outputDevices){
+        if(player->audioOutPut()->getCurrentOutputDevice() ==
+                iter.second.deviceIndex){
+          ui->devicesComboBox->setCurrentText(QString::fromStdWString(iter.second.name));
+        }
+    }
+
     //! Set the Combobox for available Samplerates of active AudioDevice
+
     for(auto iter: outputDevices){
 #ifdef _WIN32
         if(iter.second.name == ui->devicesComboBox->currentText().toStdWString().c_str()){
@@ -119,17 +130,28 @@ PlayerWidget::PlayerWidget(QWidget *parent) :
         if(iter.second.name == ui->devicesComboBox->currentText().toStdString().c_str()){
 #endif
             OutDevice currentDevice = iter.second;
+            qDebug() << "current Device in widget: " << QString::fromStdWString(currentDevice.name) << endl;
+            qDebug() << "current Device in widget samplerate: " << QString::fromStdString(currentDevice.currentSamplerate) << endl;
+
+            //! set Combobox abailable Samplerates
             for(auto iter: currentDevice.availableSamplerates){
-                QString sr = QString::fromStdString(iter.second);
+                QString sr = QString::fromStdString(iter.first);
                 ui->sampleratesComboBox->addItem(sr.toUtf8());
             }
 
-            QString current = QString::fromStdString(to_string((int)currentDevice.currentSamplerate));
-            qDebug() << "current: " << current;
-            ui->sampleratesComboBox->setCurrentText(current);
+            //! set Combobox current Item
+            auto search =
+                    currentDevice.availableSamplerates.find(currentDevice.currentSamplerate);
+            if(search != currentDevice.availableSamplerates.end()){
+                QString current = QString::fromStdString(search->first);
+                int id = search->second;
+                ui->sampleratesComboBox->setCurrentIndex(search->second);
+                qDebug() << "current Samplerate: " << current << "id: " <<id;
+            }
+
         }
     }
-    //ui->sampleratesComboBox->setCurrentText();
+
 
     player->getPlayerTicker()->registerReceiver(this);
     player->getPlayerTicker()->registerReceiver(waveformCursorProxy);
@@ -569,5 +591,5 @@ void PlayerWidget::on_getInfoPushButton_pressed()
 
 void PlayerWidget::on_sampleratesComboBox_currentTextChanged(const QString &arg1)
 {
-    //player->audioOutPut()->setOutpuDeviceSamplerate(arg1.toStdString().c_str());
+    player->audioOutPut()->setOutpuDeviceSamplerate(arg1.toStdString().c_str());
 }
