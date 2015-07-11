@@ -68,6 +68,7 @@ macx {
         #INCLUDEPATH += /Developer/Qt_projekte/PSndWave/QWave2
         INCLUDEPATH += /Developer/Qt_Projekte/PSndPlayer
         INCLUDEPATH += /Users/admin7/Developer7/QtProjects/PSndPlayer
+        INCLUDEPATH += /Users/adminM/Developer/QtProjects/PSndPlayer
 
         INCLUDEPATH += . \
         /usr/local/include
