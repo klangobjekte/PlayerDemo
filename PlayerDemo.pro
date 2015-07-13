@@ -62,6 +62,7 @@ win32-msvc2012{
 win32-msvc2013{
         INCLUDEPATH += . \
         "C:/QtProjects/meta_mp" \
+        "C:\Program Files\Mega-Nerd\libsndfile\include" \
         "C:/QtProjects/PSndPlayer"
         #LIBS += "C:/Qt_Projekte/build-PSndWave-Desktop_Qt_5_2_0_MSVC2012_32bit-Debug/debug/PSndWave.lib"
         LIBS += "C:/QtProjects/build-PSndPlayer-Desktop_Qt_5_4_2_MSVC2013_OpenGL_32bit-Debug/debug/PSndPlayer.lib"
