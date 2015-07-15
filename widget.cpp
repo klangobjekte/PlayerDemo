@@ -264,20 +264,20 @@ void PlayerWidget::loadWaveform(){
             currentFile = filename;
             double len = mediaSource->duration();
             qDebug() << "len: " << len;
-            qDebug() << "ch: " << mediaSource->outData()->channels;
+            qDebug() << "ch: " << mediaSource->getMyOutData()->channels;
             ui->seekSlider->setRange(0, len*1000);
             if(waveforms.find(filename) == waveforms.end()){
                 waveFormBuffer = new WaveFormBuffer(this,
                                                 filename.c_str(),
-                                                mediaSource->outData()->outSampleRate,
-                                                mediaSource->outData()->channels,
-                                                mediaSource->outData()->num_frames,
+                                                mediaSource->getMyOutData()->outSampleRate,
+                                                mediaSource->getMyOutData()->channels,
+                                                mediaSource->getMyOutData()->num_frames,
                                                 len);
                 //qDebug() << "calling loadBuffer 1 --------------------------------------";
-                //waveFormBuffer->loadBuffer(mediaSource->outData()->data,
+                //waveFormBuffer->loadBuffer(mediaSource->getMyOutData()->data,
                 //                       0,
                 //                       len);
-                for (int ch=0; ch<mediaSource->outData()->channels; ++ch)
+                for (int ch=0; ch<mediaSource->getMyOutData()->channels; ++ch)
                 {
                     //WaveformVRuler *verticalRuler = new WaveformVRuler(this);
                     waveform = new Waveform  (waveFormBuffer, ch, 0.0, len, this); //4ter Parameter ist Duration
@@ -307,7 +307,7 @@ void PlayerWidget::loadWaveform(){
             for(channeliter = waveformMap.begin();channeliter != waveformMap.end();channeliter++){
                 waveform = channeliter->second;
                 if(runOnce){
-                    waveform->getWaveFormBuffer()->noCopyBuffer(mediaSource->outData()->data,0,len);
+                    waveform->getWaveFormBuffer()->noCopyBuffer(mediaSource->getMyOutData()->data,0,len);
                     runOnce = false;
                 }
                 ui->gridLayout->addWidget(waveform, gridCurRow, 0); // Waveform
