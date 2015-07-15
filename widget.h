@@ -67,13 +67,8 @@ signals:
 private slots:
     void on_tableWidget_cellPressed(int row, int column);
     void loadWaveform();
-
     void on_seekSlider_sliderPressed();
-
     void on_getInfoPushButton_pressed();
-
-
-
     void on_sampleratesComboBox_currentTextChanged(const QString &arg1);
 
 private:
