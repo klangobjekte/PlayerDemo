@@ -92,7 +92,7 @@ psnd_char *makeCharFromQString(QString qstring)
 PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PlayerWidget),
-    player(new PSndPlayer()),
+    player(new PSndPlayer(this)),
     waveformCursorProxy(new WaveformCursorProxy(this)),
     waveformSelectionProxy(new WaveformSelectionProxy(this)),
     ruler(new WaveformRuler(true,this)),
