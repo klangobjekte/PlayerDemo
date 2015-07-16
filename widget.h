@@ -2,21 +2,19 @@
 #define WIDGET_H
 
 #include <QWidget>
-
+#include <QObject>
 #include <psndplayer.h>
-#include "waveform.h"
+#include <psndcommon.h>
+#include <psndplayerdefenitions.h>
+#include <waveform.h>
 #include <waveformscrollbar.h>
 #include <waveformruler.h>
 #include <waveformcursorproxy.h>
 #include <waveformselectionproxy.h>
 #include "waveformtextproxy.h"
 #include <waveformbuffer.h>
-//#include <waveformthread.h>
-//#include <TimeLabel.h>
-//#include <SndFile.h>
-//#include <sndfile.h>
 
-
+#include "psndplayerdefenitions.h"
 namespace Ui {
 class PlayerWidget;
 }
@@ -72,9 +70,9 @@ private slots:
     void on_sampleratesComboBox_currentTextChanged(const QString &arg1);
 
 private:
-    WaveFormBuffer *waveFormBuffer;
+      WaveFormBuffer  *waveFormBuffer;
     //SndFile* soundfile;
-    WaveformRuler* ruler;
+     WaveformRuler* ruler;
     WaveformScrollBar* sb;
     WaveformCursorProxy* waveformCursorProxy;
     WaveformSelectionProxy* waveformSelectionProxy;

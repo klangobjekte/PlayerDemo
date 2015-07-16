@@ -5,6 +5,7 @@
 #include <map>
 #include "psndevents.h"
 
+
 QString
 time2str(double t, int e)
 {
@@ -91,7 +92,7 @@ psnd_char *makeCharFromQString(QString qstring)
 PlayerWidget::PlayerWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PlayerWidget),
-    player(new PSndPlayer(this)),
+    player(new PSndPlayer()),
     waveformCursorProxy(new WaveformCursorProxy(this)),
     waveformSelectionProxy(new WaveformSelectionProxy(this)),
     ruler(new WaveformRuler(true,this)),
@@ -430,7 +431,7 @@ void PlayerWidget::on_playPushButton_clicked(){
     player->audioOutPut()->setPlaydirection(FORWARD);
     paused = false;
     ui->pausePushButton->setText("||");
-    player->play(0,5);
+    player->play(0,10);
 }
 
 void PlayerWidget::on_revPlayPushButton_clicked(){
