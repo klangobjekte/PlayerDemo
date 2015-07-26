@@ -431,7 +431,7 @@ void PlayerWidget::on_playPushButton_clicked(){
     player->audioOutPut()->setPlaydirection(FORWARD);
     paused = false;
     ui->pausePushButton->setText("||");
-    player->play(0,10);
+    player->play(0,240);
 }
 
 void PlayerWidget::on_revPlayPushButton_clicked(){
