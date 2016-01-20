@@ -3,18 +3,19 @@
 
 #include <QWidget>
 #include <QObject>
-#include <psndplayer.h>
-#include <psndcommon.h>
-#include <psndplayerdefenitions.h>
-#include <waveform.h>
-#include <waveformscrollbar.h>
-#include <waveformruler.h>
-#include <waveformcursorproxy.h>
-#include <waveformselectionproxy.h>
-#include "waveformtextproxy.h"
-#include <waveformbuffer.h>
 
-#include "psndplayerdefenitions.h"
+#ifdef Q_OS_WIN
+#include <psndplayer.h>
+#include <waveformcontroler.h>
+//#include <psndcommon.h>
+//#include <psndplayerdefenitions.h>
+#else
+#include <PSndPlayer/psndplayer.h>
+#include <PSndPlayer/waveformcontroler.h>
+#endif
+
+
+
 namespace Ui {
 class PlayerWidget;
 }
@@ -28,11 +29,14 @@ public:
     explicit PlayerWidget(QWidget *parent = 0);
     ~PlayerWidget();
     void setInitialFile(QString text);
+    void setAudioVolume(int newVolume);
+    PSNDWAVE::WAVE_CURSOR getWaveformCursorShape();
+    void setWaveformCursorButton(PSNDWAVE::WAVE_CURSOR waveformCursorShape);
+
 
 
 public slots:
 
-    void on_reverseButton_clicked(bool checked);
     void on_browsePushButton_clicked();
     void on_addAndPlayPushButton_clicked();
     void on_addPushButton_clicked();
@@ -41,69 +45,68 @@ public slots:
     void on_revPlayPushButton_clicked();
     void on_fastPlayPushButton_clicked();
     void on_fastRevPushButton_clicked();
-    void on_repeatPushButton_clicked();
+    void on_repeatPushButton_clicked(bool repeat);
     void on_stopPushButton_clicked();
     void on_pausePushButton_clicked();
     void on_devicesComboBox_currentIndexChanged(QString item);
-    void customEvent(QEvent *e);
-    int getVolume();
+    int audioVolume();
     void on_loadWavePushButton_clicked();
     void on_cursorGroupBox_buttonClicked(int id);
-    void changeSelection(double beg, double dur, Waveform*);
-    void unregisterWaveform();
+    void on_WaveformSelectionChanged(double beg, double dur, PSNDWAVE::CHANGESELECTION type);
+    //void unregisterWaveform();
     void on_hZoomSlider_sliderMoved(int value);
     void on_seekSlider_sliderMoved(int value);
 
     void on_volumeSlider_valueChanged(int value);
     void on_vZoomSlider_sliderMoved(int value);
     void on_testPushButton_clicked();
+    void on_volPushButton_clicked();
 
 signals:
-    void publishWaveformCursorChanged(int);
-
+    //void publishWaveformCursorChanged(int);
+    void waveformCursorChanged(PSNDWAVE::WAVE_CURSOR);
     
 private slots:
     void on_tableWidget_cellPressed(int row, int column);
-    void loadWaveform();
+    //void loadWaveform();
     void on_seekSlider_sliderPressed();
     void on_getInfoPushButton_pressed();
     void on_sampleratesComboBox_currentTextChanged(const QString &arg1);
+    void on_tick_received(double t);
+    void on_duration_received(double t);
+    void on_Source_Changed();
+    void on_MediaSourceStatus_Changed(PSNDMEDIA::MEDIASTATUS status);
+    void on_PlayerState_Changed(PSNDPLAYER::PLAYERSTATE state);
 
 private:
-      WaveFormBuffer  *waveFormBuffer;
-    //SndFile* soundfile;
-     WaveformRuler* ruler;
-    WaveformScrollBar* sb;
-    WaveformCursorProxy* waveformCursorProxy;
-    WaveformSelectionProxy* waveformSelectionProxy;
-    WaveformScrollBar* waveformScrolBar;
-    WaveFormTextProxy *waveFormTextProxy;
-    std::map<psnd_string,MediaSource*> currentSources;
-    //vector<SndFile*> sndfiles;
-    //map<int,map<int,Waveform*> > waveforms;
-    typedef map<int,Waveform*> WaveformMap;
-    map<psnd_string,WaveformMap > waveforms;
-    WaveformMap waveformMap;
-    bool hasRuler;
+
+    void sendWaveformCursorShape(PSNDWAVE::WAVE_CURSOR waveformCursorShape);
 
     Ui::PlayerWidget *ui;
-#ifndef __DONT_USE_PLAYER
-    PSndPlayer *player;
-    map<int, string> outDevices;
+    psndplayer::PSndPlayer *player;
+    psndplayer::WaveformController *waveformController;
+    PSNDMEDIA::MEDIASTATUS _mediastatus;
+
     map<int,OutDevice> outputDevices;
-#endif
+
+
+    PSNDWAVE::WAVE_CURSOR _waveformCursorShape;
+    bool _validFile;
+
+
+
     bool paused;
 
-    double startTime;
-    double selectionduration;
-    double endTime;
+    int _audioVolume;
+    double _startTime;
+    double _selectionduration;
+    double _endTime;
     double fileduration;
     psnd_string currentFile;
     double speed;
-
-
-
-
+    double vratio;
+    bool _repeat;
+    bool _manualPlayRequest;
 
 };
 

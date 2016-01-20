@@ -98,3 +98,6 @@ macx {
         LIBS += -lsndfile \
                 -lPSndPlayer
 }
+
+DISTFILES += \
+    deploy_msvc.bat

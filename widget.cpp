@@ -89,95 +89,114 @@ psnd_char *makeCharFromQString(QString qstring)
 }
 #endif
 
-PlayerWidget::PlayerWidget(QWidget *parent) :
-    QWidget(parent),
+//using namespace psndplayer;
+
+PlayerWidget::PlayerWidget(QWidget *parent)
+    :QWidget(parent),
     ui(new Ui::PlayerWidget),
-    player(new PSndPlayer(this)),
-    waveformCursorProxy(new WaveformCursorProxy(this)),
-    waveformSelectionProxy(new WaveformSelectionProxy(this)),
-    ruler(new WaveformRuler(true,this)),
-    waveformScrolBar(new WaveformScrollBar(this)),
+    player(new psndplayer::PSndPlayer(this)),
     paused(false),
-    hasRuler(false),
-    speed(1)
+    speed(1.0),
+    _repeat(false),
+    _audioVolume(100),
+    _manualPlayRequest(false)
 {
     ui->setupUi(this);
     outputDevices = player->audioOutPut()->getOutputDevices();
 
     //! Set the Combobox for available AudioDevices
     for(auto iter: outputDevices){
-#ifdef _WIN32
-         QString dev = QString::fromStdWString((iter.second).name);
-#else
-        QString dev = QString::fromStdString((iter.second).name);
-#endif
+        QString dev = QString::psnd_fromStdString((iter.second).name);
         ui->devicesComboBox->addItem(dev.toUtf8());
     }
 
-    //! set the Combobox CurrentoutputDevic
-    for(auto iter: outputDevices){
-        if(player->audioOutPut()->getCurrentOutputDevice() ==
-                iter.second.deviceIndex){
-            ui->devicesComboBox->setCurrentText(QString::psnd_fromStdString(iter.second.name));
-        }
+    //! We clear the Combobox, cause
+    //! on_devicesComboBox_currentIndexChanged
+    //! could already have set Values
+    ui->sampleratesComboBox->clear();
+    OutDevice *currentDevice = player->audioOutPut()->getCurrentOutputDevice();
+    for(auto iter: currentDevice->availableSamplerates){
+        QString sr = QString::fromStdString(iter.first);
+        ui->sampleratesComboBox->addItem(sr.toUtf8());
     }
+    ui->sampleratesComboBox->setCurrentText(QString::fromStdString(currentDevice->currentSamplerate));
+
 
     //! Set the Combobox for available Samplerates of active AudioDevice
 
-    for(auto iter: outputDevices){
-        if(iter.second.name == ui->devicesComboBox->currentText().psnd_toStdString().c_str()){
-            OutDevice currentDevice = iter.second;
-            //qDebug() << "current Device in widget: " << QString::psnd_fromStdString(currentDevice.name) << endl;
-            //qDebug() << "current Device in widget samplerate: " << QString::fromStdString(currentDevice.currentSamplerate) << endl;
 
-            //! set Combobox abailable Samplerates
-            for(auto iter: currentDevice.availableSamplerates){
-                QString sr = QString::fromStdString(iter.first);
-                ui->sampleratesComboBox->addItem(sr.toUtf8());
-            }
-
-            //! set Combobox current Item
-            auto search =
-                    currentDevice.availableSamplerates.find(currentDevice.currentSamplerate);
-            if(search != currentDevice.availableSamplerates.end()){
-                QString current = QString::fromStdString(search->first);
-                int id = search->second;
-                ui->sampleratesComboBox->setCurrentIndex(search->second);
-                qDebug() << "current Samplerate: " << current << "id: " <<id;
-            }
-
-        }
-    }
+    //player->getPlayerTicker()->registerReceiver(this);
+    //player->getPlayerTicker()->registerReceiver(waveformCursorProxy);
+    ui->label_pos->setText("0.0000");
+    //ui->label_pos->setBackgroundRole(QPalette::Dark);
+    //ui->label_pos->setForegroundRole(QPalette::HighlightedText);
 
 
-    player->getPlayerTicker()->registerReceiver(this);
-    player->getPlayerTicker()->registerReceiver(waveformCursorProxy);
-    ui->label_position->setText("0.0000");
-    //ui->label->setBackgroundRole(QPalette::Dark);
-    //ui->label->setForegroundRole(QPalette::HighlightedText);
-
+    ui->repeatPushButton->setCheckable(true);
+    ui->revPlayPushButton->setCheckable(true);
+    ui->playPushButton->setCheckable(true);
+    ui->stopPushButton->setCheckable(true);
+    ui->pausePushButton->setCheckable(true);
+    ui->fastPlayPushButton->setCheckable(true);
+    ui->fastRevPushButton->setCheckable(true);
 
     ui->seekSlider->setRange(0, 10*1000);
 
-    ui->rulerLayout_->addWidget(ruler);
-    ui->scrollBarLayout->addWidget(waveformScrolBar);
+    //ui->rulerLayout_->addWidget(ruler);
+    //ui->scrollBarLayout->addWidget(waveformScrolBar);
+
+    ui->cursorArrowButton->setCheckable(true);
+    ui->cursorArrowButton->setVisible(false);
+    ui->cursorIbeamButton->setCheckable(true);
+    ui->cursorOpenHandButton->setCheckable(true);
+
+    ui->cursorGroupBox->addButton(ui->cursorArrowButton);
+    ui->cursorGroupBox->addButton(ui->cursorIbeamButton);
+    ui->cursorGroupBox->addButton(ui->cursorOpenHandButton);
+
+
     ui->cursorGroupBox->setId(ui->cursorArrowButton,0);
     ui->cursorGroupBox->setId(ui->cursorIbeamButton,1);
     ui->cursorGroupBox->setId(ui->cursorOpenHandButton,2);
 
 
     ui->hZoomSlider->setRange(1,299);
-    connect(waveformSelectionProxy, SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
-        this, SLOT(changeSelection(double,double,Waveform*)));
     ui->vZoomSlider->setValue(50);
     ui->vZoomSlider->setRange(1,100);
+
+
+    ui->volPopup->setWindowFlags(Qt::Popup);
+    ui->volPopup->setObjectName("volPopup");
+    ui->volumeSlider->setParent(ui->volPopup);
+    ui->volumeSlider->setValue(_audioVolume);
+    ui->volumeSlider->setObjectName("volumeSlider");
+
+
+
+    connect(player, SIGNAL(tick(double)), this, SLOT(on_tick_received(double))); //Timelabel
+    connect(player,SIGNAL(duration(double)),this,SLOT(on_duration_received(double)));
+    connect(player, SIGNAL(sourceChanged()),this, SLOT (on_Source_Changed()));
+    connect(player,SIGNAL(mediaSourceStatusChanged(PSNDMEDIA::MEDIASTATUS)),
+            this,SLOT(on_MediaSourceStatus_Changed(PSNDMEDIA::MEDIASTATUS)));
+    connect(player,SIGNAL(playerStateChange(PSNDPLAYER::PLAYERSTATE)),
+            this, SLOT(on_PlayerState_Changed(PSNDPLAYER::PLAYERSTATE)));
+
+    waveformController = NULL;
+    waveformController = new psndplayer::WaveformController(player,this);
+    ui->gridLayout->addWidget(waveformController->getWaveformWidget(),0,0,1,0);
+    connect(waveformController, SIGNAL(waveformSelectionChanged(double,double,PSNDWAVE::CHANGESELECTION)),
+        this, SLOT(on_WaveformSelectionChanged(double,double,PSNDWAVE::CHANGESELECTION)));
+
+    setInitialFile("Z:/Users/admin/music/wav/Test_Time_24_48_Mono.wav");
 }
 
 PlayerWidget::~PlayerWidget()
 {
-    player->getPlayerTicker()->unregisterReceiver(this);
-    player->getPlayerTicker()->unregisterReceiver(waveformCursorProxy);
-    delete player;
+    qDebug() << "PlayerWidget destroyed";
+    if(waveformController){delete waveformController;}
+    waveformController = NULL;
+    if(player){delete player;}
+    player = NULL;
     delete ui;
 }
 
@@ -185,178 +204,267 @@ void PlayerWidget::setInitialFile(QString text){
     ui->lineEdit->setText(text);
 }
 
-void PlayerWidget::customEvent(QEvent *e){
-    if (e->type() == (QEvent::Type)PlayerPosition){
-      ui->label_position->setText(time2str(((PlayerPositionEvent*)e)->time(),4));
-      ui->seekSlider->setSliderPosition(((PlayerPositionEvent*)e)->time()*1000);
-    }
+//! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! +++ OUTPUT DEVICES
+//! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    if (e->type() == (QEvent::Type)PlayerDuration){
-      ui->label_duration->setText(time2str(((PlayerDurationEvent*)e)->duration(),4));
+void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString item){
+    int deviceid =-1;
+    ui->sampleratesComboBox->clear();
+
+    for(auto iter: outputDevices){
+        if(iter.second.name == item.psnd_toStdString().c_str()){
+            deviceid =  iter.second.deviceIndex;
+        }
     }
+    if(deviceid >=0)
+    player->audioOutPut()->setOutputDevice(deviceid);
+
+    OutDevice *currentDevice = player->audioOutPut()->getCurrentOutputDevice();
+    for(auto iter: currentDevice->availableSamplerates){
+        QString sr = QString::fromStdString(iter.first);
+        ui->sampleratesComboBox->addItem(sr.toUtf8());
+    }
+    ui->sampleratesComboBox->setCurrentText(QString::fromStdString(currentDevice->currentSamplerate));
 }
 
-int PlayerWidget::getVolume(){
-    return 0;
-}
-
-void PlayerWidget::changeSelection(double beg, double dur, Waveform*)
+void PlayerWidget::on_sampleratesComboBox_currentTextChanged(const QString &arg1)
 {
-    qDebug() << "changeSelection beg : " << beg;
-    startTime = beg;
-    selectionduration = dur;
-    endTime = beg+dur;
-    //player->setPosition();
-    player->setPosition(beg*1000);
-    ui->label_position->setText(time2str((double)beg,4));
-    //PLAYER_DEBUG << "double beg: " << beg;
-    //selectionBeginTimeLabel->setTime(beg);
-    //selectionEndTimeLabel->setTime(beg+dur);
-    //selectionDurationTimeLabel->setTime(dur);
-    //createSndFile->setTime(beg,dur);
+    if(!arg1.isEmpty())
+        player->audioOutPut()->setOutpuDeviceSamplerate(arg1.toStdString().c_str());
 }
 
-void PlayerWidget::unregisterWaveform(){
-    hasRuler = false;
-    int count = ui->gridLayout->rowCount();
-    for(int i=0;i<count;i++){
-        if(!(ui->gridLayout->itemAtPosition(i,0)==0))
-            ui->gridLayout->removeItem(ui->gridLayout->itemAtPosition(i,0));
+//! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! +++ POSITION DURATION AND TIMELABELS
+//! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void PlayerWidget::on_tick_received(double t){
+   ui->label_pos->setText(time2str(t,3));
+   ui->seekSlider->setSliderPosition(t*1000);
+}
+
+void PlayerWidget::on_duration_received(double t){
+    ui->label_dur->setText(time2str(t,4));
+    ui->seekSlider->setRange(0,t*1000);
+}
+
+void PlayerWidget::on_volPushButton_clicked()
+{
+    qDebug()<< "SHOW VOL POPUP";
+    ui->volPopup->move(mapToGlobal(ui->volPushButton->geometry().center()));
+    ui->volPopup->show();
+}
+
+void PlayerWidget::on_WaveformSelectionChanged(double beg, double dur, PSNDWAVE::CHANGESELECTION type)
+{
+    qDebug() << "on_WaveformSelectionChanged beg : " << beg;
+    _startTime = beg;
+    _selectionduration = dur;
+    _endTime = beg+dur;
+    ui->label_pos->setText(time2str((double)beg,4));
+    ui->label_beg->setText(time2str(beg,4));
+    ui->label_end->setText(time2str(beg+dur,4));
+    ui->label_sel->setText(time2str(dur,4));
+    qDebug() << "mediaPlayer->playOnClick(): " << player->playOnClick();
+    qDebug() << "_waveformCursorShape: " << _waveformCursorShape;
+
+    if(player->state() == PSNDPLAYER::PLAYING){
+        if(player->playOnChange()){
+            player->setPosition(beg,dur,type);
+            //player->play();
+        }
     }
-    map<psnd_string,WaveformMap >::iterator witer;
-    witer  = waveforms.find(currentFile);
-    if(witer!= waveforms.end()){
-        WaveformMap wMap = witer->second;
-        WaveformMap::iterator channeliter;
-        for(channeliter = wMap.begin();channeliter != wMap.end();channeliter++){
-            Waveform *waveform = channeliter->second;
-            //waveformCursorProxy->unregisterWaveform(waveform);
-            //waveformSelectionProxy->unregisterWaveform(waveform);
-            //ruler->disconnectWaveform();
-            waveform->hide();
+    else{
+        if(player->playOnClick() &&
+                _waveformCursorShape == PSNDWAVE::WAVEFORMCURSOR_IBEAM){
+            //if(mediaPlayer->playOnChange()){
+                player->setPosition(beg,dur,type);
+                player->play();
+            //}
         }
     }
 }
+
+//! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! +++ VOLUME
+//! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void PlayerWidget::on_volumeSlider_valueChanged(int value){
+    qDebug() << "on_volumeSlider_valueChanged" << value;
+    setAudioVolume(value);
+}
+
+int PlayerWidget::audioVolume()
+{
+    return _audioVolume;
+}
+
+void PlayerWidget::setAudioVolume(int newVolume)
+{
+    qDebug() << "setAudioVolume: " << newVolume;
+    _audioVolume = newVolume;
+    if (ui->volumeSlider)
+        ui->volumeSlider->setValue(newVolume);
+    if(player)
+        player->setVolume(newVolume);
+}
+
+
+//! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! +++ WAVEFORMCURSOR
+//! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//!
+void PlayerWidget::on_cursorGroupBox_buttonClicked(int id){
+    qDebug() << "on_cursorGroupBox_buttonClicked: " << id;
+    _waveformCursorShape = (PSNDWAVE::WAVE_CURSOR)id;
+    //emit publishWaveformCursorChanged(id);
+    setWaveformCursorButton(_waveformCursorShape);
+}
+
+PSNDWAVE::WAVE_CURSOR PlayerWidget::getWaveformCursorShape()
+{
+    return _waveformCursorShape;
+}
+
+void PlayerWidget::setWaveformCursorButton(PSNDWAVE::WAVE_CURSOR waveformCursorShape)
+{
+    if(waveformCursorShape == PSNDWAVE::WAVEFORMCURSOR_IBEAM ||
+            waveformCursorShape == PSNDWAVE::WAVEFORMCURSOR_OPENHAND){
+        _waveformCursorShape = waveformCursorShape;
+        ui->cursorGroupBox->button(waveformCursorShape)->setChecked(true);
+    }
+}
+
+void PlayerWidget::sendWaveformCursorShape(PSNDWAVE::WAVE_CURSOR waveformCursorShape)
+{
+    emit waveformCursorChanged(waveformCursorShape);
+}
+
+//! +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! +++ PLAYER CONTROL
+//! +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+void PlayerWidget::on_repeatPushButton_clicked(bool repeat){
+
+    qDebug() << "+++++ play repeat " <<  repeat;
+    ui->pausePushButton->setText("||");
+    _repeat = repeat;
+    player->setRepeat(repeat);
+}
+
+void PlayerWidget::on_revPlayPushButton_clicked(){
+    qDebug() << "on_revPlayPushButton_clicked: ";
+    player->setReverse(true);
+    _manualPlayRequest = true;
+}
+
+void PlayerWidget::on_playPushButton_clicked(){
+    qDebug() << "on_playPushButton_clicked: ";
+    speed = 1.0;
+    ui->pausePushButton->setText("||");
+    _manualPlayRequest = true;
+    player->play();
+}
+
+void PlayerWidget::on_stopPushButton_clicked(){
+    qDebug() << "onstopPushButtonClicked";
+    speed = 1.0;
+    player->stop();
+}
+
+void PlayerWidget::on_pausePushButton_clicked(){
+    player->pause();
+}
+
+void PlayerWidget::on_fastPlayPushButton_clicked(){
+    speed+=0.1;
+    qDebug() << "on_fastPlayPushButton_clicked" << speed;
+    //player->audioOutPut()->setPlaydirection(FORWARD);
+    player->audioOutPut()->setPlaySpeed(speed);
+}
+
+void PlayerWidget::on_fastRevPushButton_clicked(){
+    qDebug() << "on_fastRevPushButton_clicked";
+    //player->audioOutPut()->setPlaydirection(REVERSE);
+    speed-=0.1;
+    player->audioOutPut()->setPlaySpeed(speed);
+}
+
+void PlayerWidget::on_seekSlider_sliderMoved(int value){
+    qDebug() << "on_seekSlider_sliderMoved: " << value;
+    //player->setPosition(value);
+    ui->label_pos->setText(time2str((double)value/1000,4));
+}
+
+void PlayerWidget::on_seekSlider_sliderPressed()
+{
+    qDebug() << "on_seekSlider_sliderPressed: " ;
+    //player->setPosition(ui->seekSlider->value());
+    ui->label_pos->setText(time2str((double)ui->seekSlider->value()/1000,4));
+
+}
+
+void PlayerWidget::on_vZoomSlider_sliderMoved(int value){
+    double vratio = value/50.0;
+    qDebug() << "on_vZoomSlider_sliderMoved: " << vratio;
+    //vratio *= 1.5;
+    //vratio /= 1.5;
+    //emit setVertZoom(vratio);
+/*
+    map<psnd_string,WaveformMap >::iterator witer;
+    witer  = waveforms.find(currentFile);
+    WaveformMap wMap = witer->second;
+    WaveformMap::iterator channeliter;
+    for(channeliter = wMap.begin();channeliter != wMap.end();channeliter++){
+        Waveform *waveform = channeliter->second;
+        //waveformCursorProxy->unregisterWaveform(waveform);
+        //waveformSelectionProxy->unregisterWaveform(waveform);
+        //ruler->disconnectWaveform();
+        double len = waveform->getWaveFormBuffer()->getLengthSeconds();
+        //waveform->display(0,len/value,true);
+        waveform->setAmplitudeRatio(vratio);
+    }
+    */
+}
+
+void PlayerWidget::on_hZoomSlider_sliderMoved(int value){
+    qDebug() << "on_hZoomSlider_sliderMoved: " << value;
+    /*
+    map<psnd_string,WaveformMap >::iterator witer;
+    witer  = waveforms.find(currentFile);
+    WaveformMap wMap = witer->second;
+    WaveformMap::iterator channeliter;
+    for(channeliter = wMap.begin();channeliter != wMap.end();channeliter++){
+        Waveform *waveform = channeliter->second;
+        //waveformCursorProxy->unregisterWaveform(waveform);
+        //waveformSelectionProxy->unregisterWaveform(waveform);
+        //ruler->disconnectWaveform();
+        double len = waveform->getWaveFormBuffer()->getLengthSeconds();
+        waveform->display(0,len/value,true);
+    }
+    */
+}
+
+
+//! +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! +++ PLAYLIST
+//! +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void PlayerWidget::on_tableWidget_cellPressed(int row, int column)
 {
     qDebug() << "on_tableWidget_cellPressed: " << row << column;
     ui->lineEdit->setText(ui->tableWidget->item(row,column)->text());
-    player->stop();
-    on_addAndPlayPushButton_clicked();
+    player->addFile( ui->lineEdit->text().psnd_toStdString().c_str());
+    //player->stop();
+    //on_addAndPlayPushButton_clicked();
     //on_addPushButton_clicked();
     //on_loadWavePushButton_clicked();
-}
-
-void PlayerWidget::loadWaveform(){
-    currentSources = player->getCurrentSources();
-
-    map<psnd_string,MediaSource*>::iterator sourceIter;
-    psnd_string filename;
-    //map<psnd_string,WaveformMap >::iterator witer;
-    int gridCurRow = 0;
-    Waveform* waveform =0;
-    MediaSource *mediaSource = 0;
-    unregisterWaveform();
-    filename = ui->lineEdit->text().psnd_toStdString();
-
-    if(currentSources.find(filename) != currentSources.end()){
-            mediaSource = currentSources[filename];
-            currentFile = filename;
-            double len = mediaSource->duration();
-            qDebug() << "len: " << len;
-            qDebug() << "ch: " << mediaSource->getMyOutData()->channels;
-            ui->seekSlider->setRange(0, len*1000);
-            if(waveforms.find(filename) == waveforms.end()){
-                waveFormBuffer = new WaveFormBuffer(this,
-                                                filename.c_str(),
-                                                mediaSource->getMyOutData()->outSampleRate,
-                                                mediaSource->getMyOutData()->channels,
-                                                mediaSource->getMyOutData()->num_frames,
-                                                len);
-                //qDebug() << "calling loadBuffer 1 --------------------------------------";
-                //waveFormBuffer->loadBuffer(mediaSource->getMyOutData()->data,
-                //                       0,
-                //                       len);
-                for (int ch=0; ch<mediaSource->getMyOutData()->channels; ++ch)
-                {
-                    //WaveformVRuler *verticalRuler = new WaveformVRuler(this);
-                    waveform = new Waveform  (waveFormBuffer, ch, 0.0, len, this); //4ter Parameter ist Duration
-                    //waveform->setObjectName(tr("waveform%1").arg(_sndfiles.size()));
-                    //waveform->setWaveformCursorShape(_waveformCursorShape);
-                    //ui->gridLayout->addWidget(verticalRuler, gridCurRow, 0); // Vertical Ruler (WaveformRuler)
-
-                    waveformSelectionProxy->registerWaveform(waveform);
-                    waveformCursorProxy->registerWaveform(waveform);
-
-                    //waveformScrolBar->registerWaveform(waveform);
-
-                    connect(waveformSelectionProxy,SIGNAL(waveformSelectionChanged(double,double,Waveform*)),
-                            waveform,SLOT(setSelectionParameter(double,double,Waveform*)));
-                    connect(ui->cursorGroupBox,SIGNAL(buttonClicked(int)),
-                            waveform,SLOT(setWaveformCursorShape(int)));
-                    waveforms[filename][ch] = waveform;
-
-
-                }// for channels
-
-            }//! existing waveform?
-
-            waveformMap = waveforms[filename];
-            WaveformMap::iterator channeliter;
-            bool runOnce = true;
-            for(channeliter = waveformMap.begin();channeliter != waveformMap.end();channeliter++){
-                waveform = channeliter->second;
-                if(runOnce){
-                    waveform->getWaveFormBuffer()->noCopyBuffer(mediaSource->getMyOutData()->data,0,len);
-                    runOnce = false;
-                }
-                ui->gridLayout->addWidget(waveform, gridCurRow, 0); // Waveform
-                //verticalRuler->connectToWaveform(waveform);
-                //verticalRuler->show();
-
-                waveform->show();
-                if (hasRuler == false) {
-                    ruler->connectToWaveform(waveform);
-
-                    ruler->show();
-                    //waveform->setHasRuler(true);
-                    hasRuler = true;
-                }
-                //connect(waveform, SIGNAL(waveformMouseMoved(Waveform*,double)),
-                //    this, SLOT(setTime(Waveform*,double)));
-                //connect(waveform, SIGNAL(waveformMouseMoved(double)),
-                //    this, SLOT(seek(int)));
-
-                //! nach Click in Waveform wird ab Klick weitergespielt
-                //connect(waveform, SIGNAL(waveformMouseReleased(Waveform*,double)),
-                //    this, SLOT(onRelChangePlayPosition()));
-                //connect(this, SIGNAL(setVertZoom(double)),
-                //        waveform, SLOT(setAmplitudeRatio(double)));
-                //connect(this,SIGNAL(waveformCursorChanged(int)),
-                //        waveform,SLOT(setWaveformCursorShape(int)));
-
-                //QColor waveformColor(QColor(42, 38, 38));
-                //QColor backgroundColor(QColor(85, 85, 127));
-                //soundfile->setColor(waveformColor,backgroundColor);
-                waveform->display(0,len,true);
-                ++gridCurRow;
-            }//! iterchannels
-        }// if filename
-      //player->resume();
-       //QSlider *hzoomSlider = new QSlider(this);
-       //hzoomSlider->setOrientation(Qt::Horizontal);
-       //hzoomSlider->setFixedWidth(300);
-       //hzoomSlider->setMinimum(-10);
-       //hzoomSlider->setMaximum(10);
-       //grid->addWidget(hzoomSlider, 4,0);
-    //}//! for sources
 }
 
 void PlayerWidget::on_loadWavePushButton_clicked(){
 
     qDebug() << "on_loadWavePushButton_clicked";
-    loadWaveform();
+    //loadWaveform();
 
 
 }
@@ -402,181 +510,191 @@ void PlayerWidget::on_browsePushButton_clicked(){
 
 void PlayerWidget::on_addAndPlayPushButton_clicked(){
     qDebug() << "on_addAndPlayPushButton_clicked!";
-    player->pause();
-
-    if(player->addFile( ui->lineEdit->text().psnd_toStdString().c_str()))
-    {
-        //loadWaveform();
-    }
+    player->addFile(ui->lineEdit->text().psnd_toStdString().c_str());
+    player->play();
 }
 
 void PlayerWidget::on_addPushButton_clicked(){
     qDebug() << "on_addPushButton_clicked!";
-    player->pause();
+    //player->pause();
     player->addFile(ui->lineEdit->text().psnd_toStdString().c_str());
-
 }
 
 void PlayerWidget::on_removePushButton_clicked(){
 
 }
 
-void PlayerWidget::on_reverseButton_clicked(bool checked){
-    qDebug() << "on_reverseButton_clicked: " << checked;
-    player->reverse(checked);
+void PlayerWidget::on_Source_Changed(){
+    qDebug() << "PlayerWidget on_Source_Changed";
+    if(waveformController){waveformController->startLoadWaveform();}
+    _startTime = 0.0;
+    _selectionduration = 0.0;
+    _endTime = 0.0;
+    vratio = 1;
 }
 
-void PlayerWidget::on_playPushButton_clicked(){
-    speed = 1;
-    player->audioOutPut()->setPlaydirection(FORWARD);
-    paused = false;
-    ui->pausePushButton->setText("||");
-    player->play(0,240);
-}
-
-void PlayerWidget::on_revPlayPushButton_clicked(){
-    player->audioOutPut()->setPlaydirection(REVERSE);
-
-}
-
-void PlayerWidget::on_fastPlayPushButton_clicked(){
-    speed+=0.1;
-    qDebug() << "on_fastPlayPushButton_clicked" << speed;
-    //player->audioOutPut()->setPlaydirection(FORWARD);
-    player->audioOutPut()->setPlaySpeed(speed);
-}
-
-void PlayerWidget::on_fastRevPushButton_clicked(){
-    qDebug() << "on_fastRevPushButton_clicked";
-    //player->audioOutPut()->setPlaydirection(REVERSE);
-    speed-=0.1;
-    player->audioOutPut()->setPlaySpeed(speed);
-}
-
-void PlayerWidget::on_repeatPushButton_clicked(){
-    paused = false;
-    ui->pausePushButton->setText("||");
-    //player->repeat(waveformSelection->getBeginSeconds(),
-      //	 waveformSelection->getWidthSeconds());
-}
-
-void PlayerWidget::on_stopPushButton_clicked(){
-    qDebug() << "onstopPushButtonClicked";
-    speed = 1;
-    player->stop();
-}
-
-void PlayerWidget::on_pausePushButton_clicked(){
-
-}
-
-void PlayerWidget::on_devicesComboBox_currentIndexChanged(QString item){
-    int _id =0;
-#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
-    qDebug() << "QT Version 5";
-    //! c++11
-    for(auto iter: outputDevices){
-        #ifdef _WIN32
-        if(iter.second.name == item.toStdWString().c_str()){
-        #else
-        if(iter.second.name == item.toStdString().c_str()){
-        #endif
-            _id =  iter.second.deviceIndex;
-        }
-    }
-#else
-    qDebug() << "QT Version 4";
-    map<int,string>::iterator iter;
-    for(iter = outDevices.begin();iter != outDevices.end();++iter) {
-        if(iter->second == id.toStdString().c_str()){
-        _id =  iter->first;
-        }
-    }
-#endif
-    player->audioOutPut()->setOutputDevice(_id);
-}
-
-//! fuer Mainwindow
-void PlayerWidget::on_cursorGroupBox_buttonClicked(int id){
-    qDebug() << "on_cursorGroupBox_buttonClicked: " << id;
-    emit publishWaveformCursorChanged(id);
-}
-
-void PlayerWidget::on_seekSlider_sliderMoved(int value){
-    qDebug() << "on_seekSlider_sliderMoved: " << value;
-    player->setPosition(value);
-    ui->label_position->setText(time2str((double)value/1000,4));
-}
-
-void PlayerWidget::on_seekSlider_sliderPressed()
+void PlayerWidget::on_PlayerState_Changed(PSNDPLAYER::PLAYERSTATE state)
 {
-    qDebug() << "on_seekSlider_sliderPressed: " ;
-    player->setPosition(ui->seekSlider->value());
-    ui->label_position->setText(time2str((double)ui->seekSlider->value()/1000,4));
+    switch (state)
+    {
+    case PSNDPLAYER::PLAYING:
+        qDebug() << "PlayerWidget State:  PSNDPLAYER::PLAYING" << state;
+        //playingindex = _currentindex;
+        //playBtn->setChecked(true);
+        //repeatBtn->setChecked(false);
+        ui->pausePushButton->setChecked(false);
+        ui->stopPushButton->setChecked(false);
+        ui->playPushButton->setChecked(true);
+        ui->revPlayPushButton->setChecked(false);
+        ui->repeatPushButton->setChecked(false);
 
-}
+        //emit setPlayerActions(psf::PLAYING);
+        //emit filePlayingStatus(_qfileNameCurrent,BLUE_MESSAGE);
+        break;
 
+    case PSNDPLAYER::REVERSE:
+        qDebug() << "PlayerWidget State:  PSNDPLAYER::REVERSE" << state;
+       // playingindex = _currentindex;
+        //playRevBtn->setChecked(true);
+        //repeatBtn->setChecked(false);
+        ui->pausePushButton->setChecked(false);
+        ui->stopPushButton->setChecked(false);
+        ui->revPlayPushButton->setChecked(true);
+        ui->playPushButton->setChecked(false);
+        ui->repeatPushButton->setChecked(false);
 
+        //emit setPlayerActions(psf::REVERSE);
+        //emit filePlayingStatus(_qfileNameCurrent,BLUE_MESSAGE);
+        break;
+    case PSNDPLAYER::REPEATPLAY:
+        qDebug() << "PlayerWidget State: PPSNDPLAYER::REPEATPLAY " << state;
+        //repeatBtn->setChecked(true);
+        //playBtn->setChecked(true);
+        ui->revPlayPushButton->setChecked(false);
+        ui->playPushButton->setChecked(true);
+        ui->repeatPushButton->setChecked(true);
+        ui->pausePushButton->setChecked(false);
+        ui->stopPushButton->setChecked(false);
 
+        //pauseBtn->setChecked(true);
+        //emit setPlayerActions(psf::REPEATPLAY);
+        //emit filePlayingStatus(QString ("<font color=#00FF66>%1</font>").arg(strippedName(_qfileNameCurrent)),GREEN_MESSAGE);
+        break;
+    case PSNDPLAYER::REPEATREVERSE:
+        qDebug() << "PlayerWidget State: PPSNDPLAYER::REPEATREVERSE " << state;
+        //repeatBtn->setChecked(true);
+        //playRevBtn->setChecked(true);
+        ui->pausePushButton->setChecked(false);
+        ui->stopPushButton->setChecked(false);
+        ui->revPlayPushButton->setChecked(true);
+        ui->playPushButton->setChecked(false);
+        ui->repeatPushButton->setChecked(true);
 
-void PlayerWidget::on_volumeSlider_valueChanged(int value){
-    qDebug() << "on_volumeSlider_valueChanged" << value;
-    player->setVolume(value);
-}
+        //emit setPlayerActions(psf::REPEATREVERSE);
+        //pauseBtn->setChecked(true);
+        //emit setPlayerActions(playerPaused);
+        //emit filePlayingStatus(QString ("<font color=#00FF66>%1</font>").arg(strippedName(_qfileNameCurrent)),GREEN_MESSAGE);
+        break;
 
-void PlayerWidget::on_vZoomSlider_sliderMoved(int value){
-    double vratio = value/50.0;
-    qDebug() << "on_vZoomSlider_sliderMoved: " << vratio;
-    //vratio *= 1.5;
-    //vratio /= 1.5;
-    //emit setVertZoom(vratio);
+    case PSNDPLAYER::STOPPED:
+        qDebug() << "PlayerWidget State:  PSNDPLAYER::STOPPED" << state;
+        //playBtn->setChecked(false);
+        //stopBtn->setChecked(true);
+        ui->stopPushButton->setChecked(true);
+        ui->pausePushButton->setChecked(false);
+        ui->revPlayPushButton->setChecked(false);
+        ui->playPushButton->setChecked(false);
 
-    map<psnd_string,WaveformMap >::iterator witer;
-    witer  = waveforms.find(currentFile);
-    WaveformMap wMap = witer->second;
-    WaveformMap::iterator channeliter;
-    for(channeliter = wMap.begin();channeliter != wMap.end();channeliter++){
-        Waveform *waveform = channeliter->second;
-        //waveformCursorProxy->unregisterWaveform(waveform);
-        //waveformSelectionProxy->unregisterWaveform(waveform);
-        //ruler->disconnectWaveform();
-        double len = waveform->getWaveFormBuffer()->getLengthSeconds();
-        //waveform->display(0,len/value,true);
-        waveform->setAmplitudeRatio(vratio);
+        //emit setPlayerActions(psf::STOPPED);
+        //emit filePlayingStatus(QString("<font color=#00FF66>%1</font>").arg(strippedName(_qfileNameCurrent)),GREEN_MESSAGE);
+        break;
+
+    case PSNDPLAYER::PAUSED:
+        qDebug() << "PlayerWidget State: PSNDPLAYER::PAUSED " << state;
+        //playBtn->setChecked(false);
+        //pauseBtn->setChecked(true);
+        ui->pausePushButton->setChecked(true);
+        ui->stopPushButton->setChecked(false);
+        ui->revPlayPushButton->setChecked(false);
+        ui->playPushButton->setChecked(false);
+
+        //emit setPlayerActions(psf::PAUSED);
+        //emit filePlayingStatus(QString ("<font color=#00FF66>%1</font>").arg(strippedName(_qfileNameCurrent)),GREEN_MESSAGE);
+        break;
     }
 }
 
-void PlayerWidget::on_hZoomSlider_sliderMoved(int value){
-    qDebug() << "on_hZoomSlider_sliderMoved: " << value;
-    map<psnd_string,WaveformMap >::iterator witer;
-    witer  = waveforms.find(currentFile);
-    WaveformMap wMap = witer->second;
-    WaveformMap::iterator channeliter;
-    for(channeliter = wMap.begin();channeliter != wMap.end();channeliter++){
-        Waveform *waveform = channeliter->second;
-        //waveformCursorProxy->unregisterWaveform(waveform);
-        //waveformSelectionProxy->unregisterWaveform(waveform);
-        //ruler->disconnectWaveform();
-        double len = waveform->getWaveFormBuffer()->getLengthSeconds();
-        waveform->display(0,len/value,true);
+void PlayerWidget::on_MediaSourceStatus_Changed(PSNDMEDIA::MEDIASTATUS status){
+    _mediastatus = status;
+    switch(status){
+    case PSNDMEDIA::UnknownMediaStatus:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ UnknownMediaStatus   " << status;
+        _validFile = false;
+        break;
+    case PSNDMEDIA::NoMedia:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ NoMedia              " << status;
+        _validFile = false;
+        break;
+    case PSNDMEDIA::LoadingMedia:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ LoadingMedia          " << status;
+        //setFileDuration(mediaPlayer->getCurrentMediasource()->duration());
+        //prepareonce = true;
+        _validFile = false;
+        break;
+    case PSNDMEDIA::LoadedMedia:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ LoadedMedia           " << status;
+        //prepareonce = true;
+        //phononloadError = false;
+        _validFile = true;
+        //setFileDuration(mediaPlayer->getCurrentMediasource()->getMyOutData()->duration);
+        break;
+    case PSNDMEDIA::StalledMedia:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ StalledMedia          " << status;
+        break;
+    case PSNDMEDIA::BufferingMedia:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ BufferingMedia        " << status;
+        //setFileDuration(mediaPlayer->getCurrentMediasource()->getMyOutData()->duration);
+        //stoppedState = true;
+        //pausedState = false;
+        _validFile = true;
+        break;
+    case PSNDMEDIA::BufferedMedia:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ BufferedMedia         " << status;
+        //playingindex = _currentindex;
+        //setFileDuration(mediaPlayer->getCurrentMediasource()->getMyOutData()->duration);
+        if(waveformController){waveformController->startLoadWaveform();}
+        _validFile = true;
+        break;
+    case PSNDMEDIA::EndOfMedia:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ EndOfMedia            " << status;
+        //emit publishFinished();
+        break;
+    case PSNDMEDIA::InvalidMedia:
+        qDebug() << "PlayerWidget MediaStatus Event +++++++++++++++++++++++++++ InvalidMedia          " << status;
+        if(waveformController)
+            waveformController->resetWaveform();
+        //phononloadError = true;
+        _validFile = false;
+        //emit fileSpotted(mediaPlayer->errorString());
+        break;
     }
 }
+
+//! +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! +++ VARIABLES AND SETTINGS
+//! +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//! +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! +++ HELPER
+//! +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 void PlayerWidget::on_testPushButton_clicked(){
     player->testbutton();
 }
-
 
 void PlayerWidget::on_getInfoPushButton_pressed()
 {
     if(player->getCurrentMediasource()){
         player->getCurrentMediasource()->getInfo();
     }
-}
-
-
-
-void PlayerWidget::on_sampleratesComboBox_currentTextChanged(const QString &arg1)
-{
-    player->audioOutPut()->setOutpuDeviceSamplerate(arg1.toStdString().c_str());
 }
